@@ -713,6 +713,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         // Rotation matrix.
         DirectX::XMMATRIX rotation_matrix = DirectX::XMMATRIX(matrix);
 
+        // idk
+
         // Combine matrices
         DirectX::XMMATRIX model = translationMatrix;
 
