@@ -67,8 +67,14 @@ static constexpr uint8_t map_size = map_width * map_height * map_depth;
 static std::array<TileType, map_size> map;
 
 TileType get_tile_at(int x, int y, int z) {
-  const auto index = z * map_depth * map_height + y * map_width + x;
 
+    if (x < 0 || x >= map_width || y < 0 || y >= map_height || 
+        z < 0 || z >= map_depth) {
+    return TileType::kNone;
+  }
+
+  const auto index = z * map_depth * map_height + y * map_width + x;
+  std::cout << index << '\n';
   if (index < 0 || index >= map.size()) {
     return TileType::kNone;
   }
@@ -661,31 +667,41 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       player.Update(dt_count);
 
-      const DirectX::XMFLOAT3 post_g_pos(DirectX::XMVectorGetX(player.position),
-                                         DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
-                                         DirectX::XMVectorGetZ(player.position));
-      player.position = DirectX::XMLoadFloat3(&post_g_pos);
-
-
-      const DirectX::XMFLOAT3 normalized_pos(
+      const DirectX::XMINT3 normalized_pos(
           DirectX::XMVectorGetX(player.position),
           DirectX::XMVectorGetY(player.position),
           DirectX::XMVectorGetZ(player.position));
 
-      if (get_tile_at(normalized_pos.x, normalized_pos.y - 1, normalized_pos.z) != TileType::kNone)
-      {
-        const auto player_y = DirectX::XMVectorGetY(player.position);
+      //std::cout << normalized_pos.y << '\n';
 
-        if (player_y <= normalized_pos.y + 0.5) {
+      const DirectX::XMINT3 bottom_tile_pos(
+          normalized_pos.x,
+          normalized_pos.y - 1,
+          normalized_pos.z);
+
+      if (get_tile_at(bottom_tile_pos.x, bottom_tile_pos.y,
+                      bottom_tile_pos.z) != TileType::kNone)
+      {
+        const auto player_bottom_y =
+            DirectX::XMVectorGetY(player.position) - 0.5f;
+
+        if (player_bottom_y <= bottom_tile_pos.y + 0.5) {
           const DirectX::XMFLOAT3 clamped_pos(
-              DirectX::XMVectorGetX(player.position), 1,
+              DirectX::XMVectorGetX(player.position),
+              normalized_pos.y,
               DirectX::XMVectorGetZ(player.position));
 
           player.position = DirectX::XMLoadFloat3(&clamped_pos);
         }
       }
+      else {
+        const DirectX::XMFLOAT3 post_g_pos(
+            DirectX::XMVectorGetX(player.position),
+            DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
+            DirectX::XMVectorGetZ(player.position));
 
-      std::cout << DirectX::XMVectorGetY(player.position) << '\n';
+        player.position = DirectX::XMLoadFloat3(&post_g_pos);
+      }
 
       const DirectX::XMFLOAT3 cam_pos_val(
           DirectX::XMVectorGetX(player.position),
