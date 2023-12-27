@@ -7,12 +7,14 @@
 class Player {
 public:
   DirectX::XMVECTOR position;
-  DirectX::XMVECTOR front_dir;
-  DirectX::XMVECTOR up_dir;
-  DirectX::XMVECTOR right_dir;
+  DirectX::XMVECTOR front_view;
+  DirectX::XMVECTOR up_view;
+  DirectX::XMVECTOR right_view;
   DirectX::XMVECTOR front_move;
   DirectX::XMVECTOR right_move;
+  DirectX::XMVECTOR world_front;
   DirectX::XMVECTOR world_up;
+  DirectX::XMVECTOR world_right;
 
   float yaw = -90.f, pitch = 0.f;
   float view_sensitivity = 15.f;

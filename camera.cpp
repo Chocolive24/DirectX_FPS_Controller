@@ -19,7 +19,7 @@ void Camera::Begin(DirectX::XMFLOAT3 start_pos) noexcept {
 
 void Camera::Update(const float dt) noexcept { 
   Rotate(dt);
-  Move(dt);
+  //Move(dt);
   const auto focus_position = DirectX::XMVectorAdd(position, front_dir);
   view_matrix = DirectX::XMMatrixLookAtRH(position, focus_position, up_dir);
 }

@@ -49,7 +49,7 @@
 //      dès que j'intersect un cube, je clamp ma position a la pos normalisée
 //      clamp x si collision droite - gauche, y pour haut bas etc.
 
-static DirectX::XMFLOAT3 cam_pos(0.f, 2.f, 0.f);
+static DirectX::XMFLOAT3 cam_pos(0.f, 2.f, 1.f);
 static Player player;
 
 HWND window;
@@ -629,9 +629,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       player.Update(dt_count);
 
       // View matrix.
-      const auto focus_position = DirectX::XMVectorAdd(player.position, player.front_dir);
+      const auto focus_position = DirectX::XMVectorAdd(player.position, player.front_view);
       const auto view = DirectX::XMMatrixLookAtRH(
-          player.position, focus_position, player.up_dir);
+          player.position, focus_position, player.up_view);
       // Projection matrix
       DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
           DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 100.f);
