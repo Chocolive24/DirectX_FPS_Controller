@@ -4,20 +4,26 @@
 
 namespace Input
 {
-  extern bool w_pressed;
-  extern bool a_pressed;
-  extern bool s_pressed;
-  extern bool d_pressed;
-  extern bool l_shift_pressed;
-  extern bool space_pressed;
+  struct State {
+	bool w;
+	bool a;
+	bool s;
+	bool d;
+	bool l_shift;
+	bool space;
+	
+	bool mouse_relative;
+	int mouse_x;
+	int mouse_y;
+	int old_mouse_x;
+	int old_mouse_y;
+	int mouse_delta_x;
+	int mouse_delta_y; 
+  };
 
-  extern int mouse_x;
-  extern int mouse_y;
-  extern int old_mouse_x;
-  extern int old_mouse_y;
-  extern int mouse_delta_x;
-  extern int mouse_delta_y;
+  extern State state;
 
   void ProcessInputs(UINT msg, WPARAM wparam, LPARAM lparam);
-};
+  void UpdateMouseRelativeState(const HWND& window, RECT rect, POINT center);
+ };
 

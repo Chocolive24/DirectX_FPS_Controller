@@ -4,7 +4,7 @@
 
 #include <DirectXMath.h>
 
-class Camera {
+class Player {
 public:
   DirectX::XMVECTOR position;
   DirectX::XMVECTOR front_dir;
@@ -14,15 +14,13 @@ public:
   DirectX::XMVECTOR right_move;
   DirectX::XMVECTOR world_up;
 
-  DirectX::XMMATRIX view_matrix;
-  
   float yaw = -90.f, pitch = 0.f;
-  float sensitivity = 15.f;
+  float view_sensitivity = 15.f;
   float speed = 3.f;
-  
+
   void Begin(DirectX::XMFLOAT3 start_pos) noexcept;
   void Update(float dt) noexcept;
-  void UpdateCameraVectors() noexcept;
   void Move(float dt) noexcept;
-  void Rotate(float dt) noexcept;
+  void RotateView(float dt) noexcept;
+  void UpdateVectors() noexcept;
 };

@@ -20,10 +20,12 @@
 #include <string.h>
 #include <stdint.h>
 #include <vector>
-
-// replace this with your favorite Assert() implementation
+#include <chrono>
 #include <intrin.h>
 #include <iostream>
+#include "Player.h"
+
+// replace this with your favorite Assert() implementation
 #define Assert(cond)             \
   do {                           \
     if (!(cond)) __debugbreak(); \
@@ -40,10 +42,15 @@
 #define STR2(x) #x
 #define STR(x) STR2(x)
 
-bool mouse_relative = true;
+// A chaque frame:
+//  je normalise pos du joueur (enlever virgule)
+//  JE choppes les cubes autour de la pos norm (bas, haut, droit, gauche, devant, derrière)
+//  JE check les intersections avec chacun des cubes.
+//      dès que j'intersect un cube, je clamp ma position a la pos normalisée
+//      clamp x si collision droite - gauche, y pour haut bas etc.
 
-static DirectX::XMFLOAT3 cam_pos(0.f, 0.f, 3.f);
-static Camera camera;
+static DirectX::XMFLOAT3 cam_pos(0.f, 2.f, 0.f);
+static Player player;
 
 HWND window;
 RECT rect;
@@ -56,67 +63,11 @@ static void FatalError(const char* message) {
 
 static LRESULT CALLBACK WindowProc(HWND wnd, UINT msg, WPARAM wparam,
                                    LPARAM lparam) {
-  switch (msg) {
+  Input::ProcessInputs(msg, wparam, lparam);
+
+    switch (msg) {
     case WM_DESTROY:
       PostQuitMessage(0);
-      break;
-    case WM_MOUSEMOVE: {
-      Input::mouse_x = GET_X_LPARAM(lparam);
-      Input::mouse_y = GET_Y_LPARAM(lparam);
-      break;
-    }
-    case WM_LBUTTONDOWN:
-      mouse_relative = true;
-      ShowCursor(FALSE);
-      break;
-    case WM_KEYDOWN:
-      switch (wparam) {
-        case VK_ESCAPE:
-          mouse_relative = false;
-          ShowCursor(TRUE);
-          break;
-        case 'W':
-          Input::w_pressed = true;
-          break;
-        case 'A':
-          Input::a_pressed = true;
-          break;
-        case 'S':
-          Input::s_pressed = true;
-          break;
-        case 'D':
-          Input::d_pressed = true;
-          break;
-        case VK_SHIFT:
-          Input::l_shift_pressed = true;
-          break;
-        case VK_SPACE:
-          Input::space_pressed = true;
-          break;
-      }
-      break;
-    case WM_KEYUP:
-      switch (wparam) {
-        case 'W':
-          Input::w_pressed = false;
-          break;
-        case 'A':
-          Input::a_pressed = false;
-          break;
-        case 'S':
-          Input::s_pressed = false;
-          break;
-        case 'D':
-          Input::d_pressed = false;
-          break;
-        case VK_SHIFT:
-          Input::l_shift_pressed = false;
-          break;
-        case VK_SPACE:
-          Input::space_pressed = false;
-          break;
-
-      }
       break;
   }
 
@@ -279,10 +230,22 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     dxgiAdapter->Release();
     dxgiDevice->Release();
   }
-
+                      
   GeometryBuilder geometryBuilder;
-  geometryBuilder.GenerateCube(Vec3(1.f, 1.f, 1.f));
-                               
+
+  Vec3 map_size(5, 0, 5);
+  int color_var = 0;
+
+  for (int k = 0; k < map_size.z; k++) {
+    for (int i = 0; i < map_size.x; i++) {
+      const auto color = color_var % 2 == 0 ? Vec3(1.f, 1.f, 1.f) : 
+                                              Vec3(0.f, 0.f, 0.f);
+      geometryBuilder.GenerateCube(Vec3(i, 0, k), color);
+
+      color_var++;
+    }
+  }
+
   ID3D11Buffer* vbuffer;       
   {                            
     D3D11_BUFFER_DESC desc = {
@@ -387,8 +350,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 			"                                                           \n"
 			"float4 ps(PS_INPUT input) : SV_TARGET                      \n"
 			"{                                                          \n"
-			"    float4 tex = texture0.Sample(sampler0, input.uv);      \n"
-			"    return input.color * tex;                              \n"
+			"    //float4 tex = texture0.Sample(sampler0, input.uv);      \n"
+			"    return input.color;    //* tex                          \n"
 			"}                                                          \n";
     ;
 
@@ -549,13 +512,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   QueryPerformanceFrequency(&freq);
   QueryPerformanceCounter(&c1);
 
-  float angle = 0;
   DWORD currentWidth = 0;
   DWORD currentHeight = 0;
 
-  camera.Begin(cam_pos);
+  std::chrono::time_point<std::chrono::system_clock> clock =
+      std::chrono::system_clock::now();
+
+  player.Begin(cam_pos);
 
   for (;;) {
+    // Update the chrono.
+    const auto start = std::chrono::system_clock::now();
+    using seconds = std::chrono::duration<float, std::ratio<1, 1>>;
+    const auto dt = std::chrono::duration_cast<seconds>(start - clock);
+    clock = start;
+
     // get current size for window client area
     GetClientRect(window, &rect);
     width = rect.right - rect.left;
@@ -574,33 +545,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       }
     }
 
-    // Calculate mouse delta
-    Input::mouse_delta_x = Input::mouse_x - Input::old_mouse_x;
-    Input::mouse_delta_y = Input::mouse_y - Input::old_mouse_y;
-
-    GetClientRect(window, &rect);
-    center.x = (rect.left + rect.right) / 2;
-    center.y = (rect.top + rect.bottom) / 2;
-    
-    //  Update previous mouse position
-    Input::old_mouse_x = mouse_relative ? center.x : Input::mouse_x;
-    Input::old_mouse_y = mouse_relative ? center.y : Input::mouse_y;
-
-    if (mouse_relative) {
-      ClientToScreen(window, &center);
-      SetCursorPos(center.x, center.y);
-    }
-
-   /* if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT) {
-        break;
-      }
-      TranslateMessage(&msg);
-      DispatchMessageW(&msg);
-      continue;
-    }*/
-
- 
+    Input::UpdateMouseRelativeState(window, rect, center);
 
     // resize swap chain if needed
     if (rtView == NULL || width != currentWidth || height != currentHeight) {
@@ -675,63 +620,29 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       context->ClearDepthStencilView(
           dsView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
+      const auto dt_count = dt.count();
+      static float time = 0.f;
+      time += dt_count;
+
+      float aspect = (float)width / height;
+
+      player.Update(dt_count);
+
       // View matrix.
-      camera.Update();
+      const auto focus_position = DirectX::XMVectorAdd(player.position, player.front_dir);
+      const auto view = DirectX::XMMatrixLookAtRH(
+          player.position, focus_position, player.up_dir);
+      // Projection matrix
+      DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
+          DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 100.f);
 
-      // setup 4x4c rotation matrix in uniform
-      {
-        angle +=
-            delta * 2.0f * (float)M_PI / 20.0f;  // full rotation in 20 seconds
-        angle = fmodf(angle, 2.0f * (float)M_PI);
+      auto final_matrix = view * projection;
 
-        float aspect = (float)width / height;
-        float matrix[16] = {
-            cosf(angle) * aspect,
-            -sinf(angle),
-            0,
-            0,
-            sinf(angle) * aspect,
-            cosf(angle),
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-        };
-
-        static DirectX::XMFLOAT3 quad_pos = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
-
-        // Translation matrix.
-        DirectX::XMMATRIX translationMatrix =
-            DirectX::XMMatrixTranslation(quad_pos.x, quad_pos.y, quad_pos.z);
-
-        // Rotation matrix.
-        DirectX::XMMATRIX rotation_matrix = DirectX::XMMATRIX(matrix);
-
-        // idk
-
-        // Combine matrices
-        DirectX::XMMATRIX model = translationMatrix;
-
-        DirectX::XMMATRIX view = camera.view_matrix;
-
-        // Projection matrix
-        DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
-            DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 100.f);
-
-        auto final_matrix = model * view * projection;
-
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        context->Map((ID3D11Resource*)ubuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
-                     &mapped);
-        memcpy(mapped.pData, &final_matrix, sizeof(final_matrix));
-        context->Unmap((ID3D11Resource*)ubuffer, 0);
-      }
+      D3D11_MAPPED_SUBRESOURCE mapped;
+      context->Map((ID3D11Resource*)ubuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
+                   &mapped);
+      memcpy(mapped.pData, &final_matrix, sizeof(final_matrix));
+      context->Unmap((ID3D11Resource*)ubuffer, 0);
 
       // Input Assembler
       context->IASetInputLayout(layout);
@@ -760,7 +671,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       context->OMSetRenderTargets(1, &rtView, dsView);
 
       context->DrawIndexed(geometryBuilder.indices.size(), 0, 0);
-
     }
 
     // change to FALSE to disable vsync
