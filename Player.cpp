@@ -69,7 +69,6 @@ void Player::RotateView(const float dt) noexcept {
 }
 
 void Player::UpdateVectors() noexcept {
-
   // Update view vectors.
   DirectX::XMFLOAT3 new_front_view;
   new_front_view.x = cos(DirectX::XMConvertToRadians(yaw)) *
@@ -93,37 +92,9 @@ void Player::UpdateVectors() noexcept {
   new_front_move.x = cos(DirectX::XMConvertToRadians(yaw));
   new_front_move.y = 0.f;
   new_front_move.z = sin(DirectX::XMConvertToRadians(yaw));
+
   front_move = DirectX::XMLoadFloat3(&new_front_move);
 
   right_move = DirectX::XMVector3Normalize(
       DirectX::XMVector3Cross(front_move, world_up));
-
-
-
-
-
-
-
-  // Update view vectors.
-  //DirectX::XMFLOAT3 new_front;
-  //new_front.x = cos(DirectX::XMConvertToRadians(yaw)) *
-  //              cos(DirectX::XMConvertToRadians(pitch));
-  //new_front.y = sin(DirectX::XMConvertToRadians(pitch));
-  //new_front.z = sin(DirectX::XMConvertToRadians(yaw)) *
-  //              cos(DirectX::XMConvertToRadians(pitch));
-
-  //DirectX::XMVECTOR v_new_front = DirectX::XMLoadFloat3(&new_front);
-  //front_view = DirectX::XMVector3Normalize(v_new_front);
-  //// normalize the vectors, because their length gets closer to 0 the more you
-  //// look up or down which results in slower movement
-  //right_view = DirectX::XMVector3Normalize(
-  //    DirectX::XMVector3Cross(front_view, world_up));
-  //up_view = DirectX::XMVector3Normalize(
-  //    DirectX::XMVector3Cross(right_view, front_view));
-
-  //// Update movement vectors.
-  //const auto rotation =
-  //    DirectX::XMMatrixRotationY(DirectX::XMConvertToRadians(pitch));
-  //front_move = DirectX::XMVector3Transform(world_front, rotation);
-  //right_move = DirectX::XMVector3Transform(world_right, rotation);
 }

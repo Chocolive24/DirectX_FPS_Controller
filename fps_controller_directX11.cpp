@@ -3,6 +3,7 @@
 #include "geometry_builder.h"
 #include "Input.h"
 #include "camera.h"
+#include "player.h"
 
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
@@ -20,10 +21,12 @@
 #include <string.h>
 #include <stdint.h>
 #include <vector>
+#include <array>
 #include <chrono>
 #include <intrin.h>
 #include <iostream>
-#include "Player.h"
+#include <algorithm>
+
 
 // replace this with your favorite Assert() implementation
 #define Assert(cond)             \
@@ -42,6 +45,9 @@
 #define STR2(x) #x
 #define STR(x) STR2(x)
 
+// TODO
+// couleur tiles = uniform a set dans frag shader 
+
 // A chaque frame:
 //  je normalise pos du joueur (enlever virgule)
 //  JE choppes les cubes autour de la pos norm (bas, haut, droit, gauche, devant, derrière)
@@ -49,7 +55,30 @@
 //      dès que j'intersect un cube, je clamp ma position a la pos normalisée
 //      clamp x si collision droite - gauche, y pour haut bas etc.
 
-static DirectX::XMFLOAT3 cam_pos(0.f, 2.f, 1.f);
+enum class TileType {
+  kNone = 0,
+  kDirt,
+};
+
+static constexpr uint8_t map_width = 5;
+static constexpr uint8_t map_height = 1;
+static constexpr uint8_t map_depth = 5;
+static constexpr uint8_t map_size = map_width * map_height * map_depth;
+static std::array<TileType, map_size> map;
+
+TileType get_tile_at(int x, int y, int z) {
+  const auto index = z * map_depth * map_height + y * map_width + x;
+
+  if (index < 0 || index >= map.size()) {
+    return TileType::kNone;
+  }
+
+  return map[index];
+}
+
+static constexpr float kGravity = 1.f;
+
+static DirectX::XMFLOAT3 player_start_pos(0.f, 1.f, 0.f);
 static Player player;
 
 HWND window;
@@ -233,16 +262,20 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
                       
   GeometryBuilder geometryBuilder;
 
-  Vec3 map_size(5, 0, 5);
   int color_var = 0;
 
-  for (int k = 0; k < map_size.z; k++) {
-    for (int i = 0; i < map_size.x; i++) {
-      const auto color = color_var % 2 == 0 ? Vec3(1.f, 1.f, 1.f) : 
-                                              Vec3(0.f, 0.f, 0.f);
-      geometryBuilder.GenerateCube(Vec3(i, 0, k), color);
+  for (int z = 0; z < map_depth; z++) {
+    for (int y = 0; y < map_height; y++) {
+      for (int x = 0; x < map_width; x++) {
+        const auto color =
+            color_var % 2 == 0 ? Vec3(1.f, 1.f, 1.f) : Vec3(0.f, 0.f, 0.f);
+        geometryBuilder.GenerateCube(Vec3(x, y, z), color);
 
-      color_var++;
+        const auto index = z * map_depth * map_height + y * map_width + x;
+        map[index] = TileType::kDirt;
+
+        color_var++;
+      }
     }
   }
 
@@ -518,7 +551,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   std::chrono::time_point<std::chrono::system_clock> clock =
       std::chrono::system_clock::now();
 
-  player.Begin(cam_pos);
+  player.Begin(player_start_pos);
 
   for (;;) {
     // Update the chrono.
@@ -628,10 +661,42 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       player.Update(dt_count);
 
+      const DirectX::XMFLOAT3 post_g_pos(DirectX::XMVectorGetX(player.position),
+                                         DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
+                                         DirectX::XMVectorGetZ(player.position));
+      player.position = DirectX::XMLoadFloat3(&post_g_pos);
+
+
+      const DirectX::XMFLOAT3 normalized_pos(
+          DirectX::XMVectorGetX(player.position),
+          DirectX::XMVectorGetY(player.position),
+          DirectX::XMVectorGetZ(player.position));
+
+      if (get_tile_at(normalized_pos.x, normalized_pos.y - 1, normalized_pos.z) != TileType::kNone)
+      {
+        const auto player_y = DirectX::XMVectorGetY(player.position);
+
+        if (player_y <= normalized_pos.y + 0.5) {
+          const DirectX::XMFLOAT3 clamped_pos(
+              DirectX::XMVectorGetX(player.position), 1,
+              DirectX::XMVectorGetZ(player.position));
+
+          player.position = DirectX::XMLoadFloat3(&clamped_pos);
+        }
+      }
+
+      std::cout << DirectX::XMVectorGetY(player.position) << '\n';
+
+      const DirectX::XMFLOAT3 cam_pos_val(
+          DirectX::XMVectorGetX(player.position),
+          DirectX::XMVectorGetY(player.position) + 1,
+          DirectX::XMVectorGetZ(player.position));
+
+      const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
+
       // View matrix.
-      const auto focus_position = DirectX::XMVectorAdd(player.position, player.front_view);
-      const auto view = DirectX::XMMatrixLookAtRH(
-          player.position, focus_position, player.up_view);
+      const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);
+      const auto view = DirectX::XMMatrixLookAtRH(v_cam_pos, focus_position, player.up_view);
       // Projection matrix
       DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
           DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 100.f);
