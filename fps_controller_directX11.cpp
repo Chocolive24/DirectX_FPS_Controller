@@ -26,6 +26,7 @@
 #include <intrin.h>
 #include <iostream>
 #include <algorithm>
+#include <limits>
 
 
 // replace this with your favorite Assert() implementation
@@ -60,15 +61,17 @@ enum class TileType {
   kDirt,
 };
 
-static constexpr std::array<DirectX::XMINT3, 6> neighbour_tiles = {
+static constexpr std::array<DirectX::XMINT3, 10> neighbour_tiles = {
     DirectX::XMINT3(1, 0, 0), DirectX::XMINT3(-1, 0, 0),  // right, left
-    DirectX::XMINT3(0, 1, 0), DirectX::XMINT3(0, -1, 0),  // up, down
-    DirectX::XMINT3(0, 0, 1), DirectX::XMINT3(0, 0, -1)   // front, back
+    DirectX::XMINT3(1, 1, 0), DirectX::XMINT3(-1, 1, 0),  // right-up, left-up
+    DirectX::XMINT3(0, 2, 0), DirectX::XMINT3(0, -1, 0),  // up, down
+    DirectX::XMINT3(0, 0, 1), DirectX::XMINT3(0, 0, -1),   // front, back
+    DirectX::XMINT3(0, 1, 1), DirectX::XMINT3(0, 1, -1)   // front-up, back-up
 }; 
 
-static constexpr uint8_t map_width = 5;
-static constexpr uint8_t map_height = 5;
-static constexpr uint8_t map_depth = 5;
+static constexpr uint8_t map_width = 10;
+static constexpr uint8_t map_height = 2;
+static constexpr uint8_t map_depth = 10;
 static constexpr uint8_t map_size = map_width * map_height * map_depth;
 static std::array<TileType, map_size> map;
 
@@ -279,7 +282,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     for (int y = 0; y < map_height; y++) {
       for (int x = 0; x < map_width; x++) {
         const auto color =
-            color_var % 2 == 0 ? Vec3(1.f, 1.f, 1.f) : Vec3(0.f, 0.f, 0.f);
+            color_var % 2 == 0 ? Vec3(0.5f, 1.f, 0.6f) : Vec3(0.2f, 0.4f, 0.3f);
+
+        if (z > 2 && y > 0) {
+          continue;
+        }
+
         geometryBuilder.GenerateCube(Vec3(x, y, z), color);
 
         const auto index = z * map_depth * map_height + y * map_width + x;
@@ -687,72 +695,76 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       //std::cout << normalized_pos.x << " " << normalized_pos.y << " "
       //          << normalized_pos.z << '\n';
 
+      static constexpr auto max_limit = (std::numeric_limits<float>::max)();
+      static constexpr auto lowest_limit = (std::numeric_limits<float>::lowest)();
+
+      float max_pos_x = max_limit;
+      float min_pos_x = lowest_limit;
+
+      float max_pos_y = max_limit;
+      float min_pos_y = lowest_limit;
+
+      float max_pos_z = max_limit;
+      float min_pos_z = lowest_limit;
 
       for (const auto& neighbour : neighbour_tiles)
       {
         const DirectX::XMINT3 tile_pos(normalized_pos.x + neighbour.x,
                                        normalized_pos.y + neighbour.y,
                                        normalized_pos.z + neighbour.z);
-
-        if (get_tile_at(tile_pos.x, tile_pos.y, tile_pos.z) !=
-            TileType::kNone)
+      
+        if (get_tile_at(tile_pos.x, tile_pos.y, tile_pos.z) != TileType::kNone)
         {
-          std::cout << tile_pos.z * map_depth * map_height +
-                           tile_pos.y * map_width + tile_pos.x
-                    << " ";
-          // SEEMS to work so know set the min and max limit for the x, y and z values 
-          // if the neighbour tile is in x axis:
-          //    set max x
-          // if neigh tile y axis
-          //    set max y 
-          // ...
+          const int x_direction = (neighbour.x > 0) ? 1 : ((neighbour.x < 0) ? -1 : 0);
+          const int y_direction = (neighbour.y > 0) ? 1 : ((neighbour.y < 0) ? -1 : 0);
+          const int z_direction = (neighbour.z > 0) ? 1 : ((neighbour.z < 0) ? -1 : 0);
+      
+          if (x_direction != 0)
+          {
+              max_pos_x = (x_direction > 0) ? normalized_pos.x : max_pos_x;
+              min_pos_x = (x_direction < 0) ? normalized_pos.x : min_pos_x;
+          }
+          else if (z_direction != 0)
+          {
+              max_pos_z = (z_direction > 0) ? normalized_pos.z : max_pos_z;
+              min_pos_z = (z_direction < 0) ? normalized_pos.z : min_pos_z;
+          }
+          else if (y_direction != 0)
+          {
+              max_pos_y = (y_direction > 0) ? normalized_pos.y : max_pos_y;
+              min_pos_y = (y_direction < 0) ? normalized_pos.y : min_pos_y;
+          }
         }
       }
 
-      std::cout << '\n';
+      const auto player_pos_x = DirectX::XMVectorGetX(player.position);
+      const auto player_pos_y = DirectX::XMVectorGetY(player.position);
+      const auto player_pos_z = DirectX::XMVectorGetZ(player.position);
 
-      /*const DirectX::XMFLOAT3 normalized_pos(
-          DirectX::XMVectorGetX(player.position) - 0.5f,
-          DirectX::XMVectorGetY(player.position) + 0.5f,
-          DirectX::XMVectorGetZ(player.position) + 0.5f);
+      player.position = DirectX::XMVectorSetX(player.position, 
+          std::clamp(player_pos_x, min_pos_x, max_pos_x));
 
-      const DirectX::XMINT3 bottom_tile_pos(
-          normalized_pos.x + 0.5f,
-          normalized_pos.y - 1.f,
-          normalized_pos.z - 0.5f);
+      player.position = DirectX::XMVectorSetY(
+          player.position, std::clamp(player_pos_y, min_pos_y, max_pos_y));
 
-      if (get_tile_at(bottom_tile_pos.x, bottom_tile_pos.y,
-                      bottom_tile_pos.z) != TileType::kNone)
-      {
-        const auto player_bottom_y =
-            DirectX::XMVectorGetY(player.position) - 0.5f;
+      player.position = DirectX::XMVectorSetZ(
+          player.position, std::clamp(player_pos_z, min_pos_z, max_pos_z));
 
-          if (player_bottom_y <= bottom_tile_pos.y + 0.5f) {
-            const DirectX::XMFLOAT3 clamped_pos(
-              DirectX::XMVectorGetX(player.position),
-              bottom_tile_pos.y + 1.f,
-              DirectX::XMVectorGetZ(player.position));
+      //if (!player.isGrounded)
+      //{
+      //    const DirectX::XMFLOAT3 post_g_pos(
+      //        DirectX::XMVectorGetX(player.position),
+      //        DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
+      //        DirectX::XMVectorGetZ(player.position));
 
-            player.position = DirectX::XMLoadFloat3(&clamped_pos);
-            player.isGrounded = true;
-          }
-      } 
+      //    player.position = DirectX::XMLoadFloat3(&post_g_pos);
+      //}
 
-      if (!player.isGrounded)
-      {
-          const DirectX::XMFLOAT3 post_g_pos(
-              DirectX::XMVectorGetX(player.position),
-              DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
-              DirectX::XMVectorGetZ(player.position));
-
-          player.position = DirectX::XMLoadFloat3(&post_g_pos);
-      }
-
-      player.isGrounded = false;*/
+      //player.isGrounded = false;
 
       const DirectX::XMFLOAT3 cam_pos_val(
           DirectX::XMVectorGetX(player.position),
-          DirectX::XMVectorGetY(player.position),
+          DirectX::XMVectorGetY(player.position) + 1,
           DirectX::XMVectorGetZ(player.position));
 
       const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
