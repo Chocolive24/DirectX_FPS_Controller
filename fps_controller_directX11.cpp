@@ -49,6 +49,9 @@
 // TODO
 // couleur tiles = uniform a set dans frag shader 
 
+// Faire des FLOAT3 au lieu de VECTOR3 car trop chiant d'accéder aux valeurs. (pour player)
+
+
 static constexpr float kGravity = 1.f;
 
 static DirectX::XMFLOAT3 player_start_pos(0.f, 5.2f, 0.f);
