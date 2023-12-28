@@ -2,8 +2,8 @@
 
 #include "geometry_builder.h"
 #include "Input.h"
-#include "camera.h"
 #include "player.h"
+#include "map.h"
 
 #define COBJMACROS
 #define WIN32_LEAN_AND_MEAN
@@ -48,47 +48,6 @@
 
 // TODO
 // couleur tiles = uniform a set dans frag shader 
-
-// A chaque frame:
-//  je normalise pos du joueur (enlever virgule)
-//  JE choppes les cubes autour de la pos norm (bas, haut, droit, gauche, devant, derrière)
-//  JE check les intersections avec chacun des cubes.
-//      dès que j'intersect un cube, je clamp ma position a la pos normalisée
-//      clamp x si collision droite - gauche, y pour haut bas etc.
-
-enum class TileType {
-  kNone = 0,
-  kDirt,
-};
-
-static constexpr std::array<DirectX::XMINT3, 10> neighbour_tiles = {
-    DirectX::XMINT3(1, 0, 0), DirectX::XMINT3(-1, 0, 0),  // right, left
-    DirectX::XMINT3(1, 1, 0), DirectX::XMINT3(-1, 1, 0),  // right-up, left-up
-    DirectX::XMINT3(0, 2, 0), DirectX::XMINT3(0, -1, 0),  // up, down
-    DirectX::XMINT3(0, 0, 1), DirectX::XMINT3(0, 0, -1),   // front, back
-    DirectX::XMINT3(0, 1, 1), DirectX::XMINT3(0, 1, -1)   // front-up, back-up
-}; 
-
-static constexpr uint8_t map_width = 10;
-static constexpr uint8_t map_height = 2;
-static constexpr uint8_t map_depth = 10;
-static constexpr uint8_t map_size = map_width * map_height * map_depth;
-static std::array<TileType, map_size> map;
-
-TileType get_tile_at(int x, int y, int z) {
-
-    if (x < 0 || x >= map_width || y < 0 || y >= map_height || 
-        z < 0 || z >= map_depth) {
-    return TileType::kNone;
-  }
-
-  const auto index = z * map_depth * map_height + y * map_width + x;
-  if (index < 0 || index >= map.size()) {
-    return TileType::kNone;
-  }
-
-  return map[index];
-}
 
 static constexpr float kGravity = 1.f;
 
@@ -275,12 +234,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   }
                       
   GeometryBuilder geometryBuilder;
+  Map map;
 
   int color_var = 0;
 
-  for (int z = 0; z < map_depth; z++) {
-    for (int y = 0; y < map_height; y++) {
-      for (int x = 0; x < map_width; x++) {
+  for (int z = 0; z < Map::kMapDepth; z++) {
+    for (int y = 0; y < Map::kMapHeight; y++) {
+      for (int x = 0; x < Map::kMapWidth; x++) {
         const auto color =
             color_var % 2 == 0 ? Vec3(0.5f, 1.f, 0.6f) : Vec3(0.2f, 0.4f, 0.3f);
 
@@ -289,9 +249,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         }
 
         geometryBuilder.GenerateCube(Vec3(x, y, z), color);
-
-        const auto index = z * map_depth * map_height + y * map_width + x;
-        map[index] = TileType::kDirt;
+        map.SetTileAt(x, y, z, TileType::kDirt);
 
         color_var++;
       }
@@ -680,20 +638,17 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       player.Update(dt_count);
 
-      const DirectX::XMFLOAT3 debug(
-          DirectX::XMVectorGetX(player.position),
-          DirectX::XMVectorGetY(player.position),
-          DirectX::XMVectorGetZ(player.position));
-
-      //std::cout << "debug " << debug.x << " " << debug.y << " " << debug.z << '\n';
-
       const DirectX::XMINT3 normalized_pos(
           std::floor(DirectX::XMVectorGetX(player.position) + 0.5f),
           std::floor(DirectX::XMVectorGetY(player.position) + 0.5f),
           std::floor(DirectX::XMVectorGetZ(player.position) + 0.5f));
 
-      //std::cout << normalized_pos.x << " " << normalized_pos.y << " "
-      //          << normalized_pos.z << '\n';
+     const DirectX::XMFLOAT3 post_g_pos(
+          DirectX::XMVectorGetX(player.position),
+          DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
+          DirectX::XMVectorGetZ(player.position));
+
+      player.position = DirectX::XMLoadFloat3(&post_g_pos);
 
       static constexpr auto max_limit = (std::numeric_limits<float>::max)();
       static constexpr auto lowest_limit = (std::numeric_limits<float>::lowest)();
@@ -707,13 +662,13 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       float max_pos_z = max_limit;
       float min_pos_z = lowest_limit;
 
-      for (const auto& neighbour : neighbour_tiles)
+      for (const auto& neighbour : Map::kNeighbourTiles)
       {
         const DirectX::XMINT3 tile_pos(normalized_pos.x + neighbour.x,
                                        normalized_pos.y + neighbour.y,
                                        normalized_pos.z + neighbour.z);
       
-        if (get_tile_at(tile_pos.x, tile_pos.y, tile_pos.z) != TileType::kNone)
+        if (map.GetTileAt(tile_pos.x, tile_pos.y, tile_pos.z) != TileType::kNone)
         {
           const int x_direction = (neighbour.x > 0) ? 1 : ((neighbour.x < 0) ? -1 : 0);
           const int y_direction = (neighbour.y > 0) ? 1 : ((neighbour.y < 0) ? -1 : 0);
@@ -750,26 +705,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       player.position = DirectX::XMVectorSetZ(
           player.position, std::clamp(player_pos_z, min_pos_z, max_pos_z));
 
-      //if (!player.isGrounded)
-      //{
-      //    const DirectX::XMFLOAT3 post_g_pos(
-      //        DirectX::XMVectorGetX(player.position),
-      //        DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
-      //        DirectX::XMVectorGetZ(player.position));
-
-      //    player.position = DirectX::XMLoadFloat3(&post_g_pos);
-      //}
-
-      //player.isGrounded = false;
-
       const DirectX::XMFLOAT3 cam_pos_val(
           DirectX::XMVectorGetX(player.position),
           DirectX::XMVectorGetY(player.position) + 1,
           DirectX::XMVectorGetZ(player.position));
 
       const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
-
-      //std::cout << DirectX::XMVectorGetY(player.position) << '\n';
 
       // View matrix.
       const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);

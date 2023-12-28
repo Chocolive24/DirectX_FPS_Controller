@@ -133,12 +133,14 @@
     <ClCompile Include="fps_controller_directX11.cpp" />
     <ClCompile Include="geometry_builder.cpp" />
     <ClCompile Include="Input.cpp" />
+    <ClCompile Include="map.cpp" />
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
     <ClInclude Include="geometry_builder.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="map.h" />
     <ClInclude Include="player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
