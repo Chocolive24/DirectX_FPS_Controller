@@ -60,8 +60,14 @@ enum class TileType {
   kDirt,
 };
 
+static constexpr std::array<DirectX::XMINT3, 6> neighbour_tiles = {
+    DirectX::XMINT3(1, 0, 0), DirectX::XMINT3(-1, 0, 0),  // right, left
+    DirectX::XMINT3(0, 1, 0), DirectX::XMINT3(0, -1, 0),  // up, down
+    DirectX::XMINT3(0, 0, 1), DirectX::XMINT3(0, 0, -1)   // front, back
+}; 
+
 static constexpr uint8_t map_width = 5;
-static constexpr uint8_t map_height = 1;
+static constexpr uint8_t map_height = 5;
 static constexpr uint8_t map_depth = 5;
 static constexpr uint8_t map_size = map_width * map_height * map_depth;
 static std::array<TileType, map_size> map;
@@ -74,7 +80,6 @@ TileType get_tile_at(int x, int y, int z) {
   }
 
   const auto index = z * map_depth * map_height + y * map_width + x;
-  std::cout << index << '\n';
   if (index < 0 || index >= map.size()) {
     return TileType::kNone;
   }
@@ -84,7 +89,7 @@ TileType get_tile_at(int x, int y, int z) {
 
 static constexpr float kGravity = 1.f;
 
-static DirectX::XMFLOAT3 player_start_pos(0.f, 1.f, 0.f);
+static DirectX::XMFLOAT3 player_start_pos(0.f, 5.2f, 0.f);
 static Player player;
 
 HWND window;
@@ -667,17 +672,54 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       player.Update(dt_count);
 
-      const DirectX::XMINT3 normalized_pos(
+      const DirectX::XMFLOAT3 debug(
           DirectX::XMVectorGetX(player.position),
           DirectX::XMVectorGetY(player.position),
           DirectX::XMVectorGetZ(player.position));
 
-      //std::cout << normalized_pos.y << '\n';
+      //std::cout << "debug " << debug.x << " " << debug.y << " " << debug.z << '\n';
+
+      const DirectX::XMINT3 normalized_pos(
+          std::floor(DirectX::XMVectorGetX(player.position) + 0.5f),
+          std::floor(DirectX::XMVectorGetY(player.position) + 0.5f),
+          std::floor(DirectX::XMVectorGetZ(player.position) + 0.5f));
+
+      //std::cout << normalized_pos.x << " " << normalized_pos.y << " "
+      //          << normalized_pos.z << '\n';
+
+
+      for (const auto& neighbour : neighbour_tiles)
+      {
+        const DirectX::XMINT3 tile_pos(normalized_pos.x + neighbour.x,
+                                       normalized_pos.y + neighbour.y,
+                                       normalized_pos.z + neighbour.z);
+
+        if (get_tile_at(tile_pos.x, tile_pos.y, tile_pos.z) !=
+            TileType::kNone)
+        {
+          std::cout << tile_pos.z * map_depth * map_height +
+                           tile_pos.y * map_width + tile_pos.x
+                    << " ";
+          // SEEMS to work so know set the min and max limit for the x, y and z values 
+          // if the neighbour tile is in x axis:
+          //    set max x
+          // if neigh tile y axis
+          //    set max y 
+          // ...
+        }
+      }
+
+      std::cout << '\n';
+
+      /*const DirectX::XMFLOAT3 normalized_pos(
+          DirectX::XMVectorGetX(player.position) - 0.5f,
+          DirectX::XMVectorGetY(player.position) + 0.5f,
+          DirectX::XMVectorGetZ(player.position) + 0.5f);
 
       const DirectX::XMINT3 bottom_tile_pos(
-          normalized_pos.x,
-          normalized_pos.y - 1,
-          normalized_pos.z);
+          normalized_pos.x + 0.5f,
+          normalized_pos.y - 1.f,
+          normalized_pos.z - 0.5f);
 
       if (get_tile_at(bottom_tile_pos.x, bottom_tile_pos.y,
                       bottom_tile_pos.z) != TileType::kNone)
@@ -685,30 +727,37 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         const auto player_bottom_y =
             DirectX::XMVectorGetY(player.position) - 0.5f;
 
-        if (player_bottom_y <= bottom_tile_pos.y + 0.5) {
-          const DirectX::XMFLOAT3 clamped_pos(
+          if (player_bottom_y <= bottom_tile_pos.y + 0.5f) {
+            const DirectX::XMFLOAT3 clamped_pos(
               DirectX::XMVectorGetX(player.position),
-              normalized_pos.y,
+              bottom_tile_pos.y + 1.f,
               DirectX::XMVectorGetZ(player.position));
 
-          player.position = DirectX::XMLoadFloat3(&clamped_pos);
-        }
-      }
-      else {
-        const DirectX::XMFLOAT3 post_g_pos(
-            DirectX::XMVectorGetX(player.position),
-            DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
-            DirectX::XMVectorGetZ(player.position));
+            player.position = DirectX::XMLoadFloat3(&clamped_pos);
+            player.isGrounded = true;
+          }
+      } 
 
-        player.position = DirectX::XMLoadFloat3(&post_g_pos);
+      if (!player.isGrounded)
+      {
+          const DirectX::XMFLOAT3 post_g_pos(
+              DirectX::XMVectorGetX(player.position),
+              DirectX::XMVectorGetY(player.position) - kGravity * dt_count,
+              DirectX::XMVectorGetZ(player.position));
+
+          player.position = DirectX::XMLoadFloat3(&post_g_pos);
       }
+
+      player.isGrounded = false;*/
 
       const DirectX::XMFLOAT3 cam_pos_val(
           DirectX::XMVectorGetX(player.position),
-          DirectX::XMVectorGetY(player.position) + 1,
+          DirectX::XMVectorGetY(player.position),
           DirectX::XMVectorGetZ(player.position));
 
       const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
+
+      //std::cout << DirectX::XMVectorGetY(player.position) << '\n';
 
       // View matrix.
       const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);

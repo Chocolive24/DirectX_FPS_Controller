@@ -20,6 +20,8 @@ public:
   float view_sensitivity = 15.f;
   float speed = 3.f;
 
+  bool isGrounded = false;
+
   void Begin(DirectX::XMFLOAT3 start_pos) noexcept;
   void Update(float dt) noexcept;
   void Move(float dt) noexcept;
