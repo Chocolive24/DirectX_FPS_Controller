@@ -18,7 +18,7 @@ public:
 
   float yaw = -90.f, pitch = 0.f;
   float view_sensitivity = 15.f;
-  float speed = 3.f;
+  float speed = 10.f;
 
   bool isGrounded = false;
 

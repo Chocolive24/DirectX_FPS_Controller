@@ -119,7 +119,7 @@ void GeometryBuilder::GenerateQuad(Vec3 right_up, Vec3 rigth_down,
 //  indices.insert(indices.begin(), cube_indices.begin(), cube_indices.end());
 //}
 
-void GeometryBuilder::GenerateCube(Vec3 pos, Vec3 color) noexcept {
+void GeometryBuilder::GenerateCube(Vec3 pos, CubeColors cube_colors) noexcept {
   const uint32_t indice_offset = vertices.size();
 
   // Create vertices.
@@ -129,63 +129,63 @@ void GeometryBuilder::GenerateCube(Vec3 pos, Vec3 color) noexcept {
   cube_vertices = {
       // Front face - counterclockwise.
       // right up
-      Vertex{Vec3{0.5f, 0.5f, 0.5f} + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3{0.5f, 0.5f, 0.5f} + pos, Vec2(1.0f, 1.0f), cube_colors.front_color},
       // left up
-      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.front_color},
       // left down
-      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.front_color},
       // right down
-      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.front_color},
 
       // Up face - counterclockwise.
       // right up
-      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), cube_colors.top_color},
       // left up
-      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.top_color},
       // left down
-      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.top_color},
       // right down
-      Vertex{Vec3(0.5f, 0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, 0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.top_color},
 
       // Back face - clockwise.
       // left up
-      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), cube_colors.back_color},
       // left down
-      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.back_color},
       // right down
-      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.back_color},
       // right up
-      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.back_color},
 
       // Down face clockwise.
       // left up
-      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), cube_colors.bottom_color},
       // left down
-      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.bottom_color},
       // right down
-      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.bottom_color},
       // right up
-      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.bottom_color},
 
       // Right face - counterclockwise.
       // right up
-      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3(0.5f, 0.5f, -0.5f) + pos, Vec2(1.0f, 1.0f), cube_colors.right_color},
       // left up
-      Vertex{Vec3(0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(0.5f, 0.5f, 0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.right_color},
       // left down
-      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, 0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.right_color},
       // right down
-      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(0.5f, -0.5f, -0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.right_color},
 
       // Left face - clockwise.
       // left up
-      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, -0.5f) + pos, Vec2(0.0f, 1.0f), cube_colors.left_color},
       // left down
-      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, -0.5f) + pos, Vec2(0.0f, 0.0f), cube_colors.left_color},
       // right up
-      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(1.0f, 1.0f), color},
+      Vertex{Vec3(-0.5f, 0.5f, 0.5f) + pos, Vec2(1.0f, 1.0f), cube_colors.left_color},
       // right down
-      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), color},
+      Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.left_color},
   };
 
   vertices.insert(vertices.end(), cube_vertices.begin(), cube_vertices.end());

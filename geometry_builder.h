@@ -18,6 +18,15 @@ struct Vertex {
   Vec3 color;
 };
 
+struct CubeColors {
+  Vec3 front_color;
+  Vec3 top_color;
+  Vec3 back_color;
+  Vec3 bottom_color;
+  Vec3 right_color;
+  Vec3 left_color;
+};
+
 class GeometryBuilder {
 public:
   std::vector<Vertex> vertices;
@@ -26,6 +35,6 @@ public:
   void GenerateQuad(Vec3 right_up, Vec3 rigth_down, Vec3 left_down,
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
-  void GenerateCube(Vec3 pos, Vec3 color) noexcept;
+  void GenerateCube(Vec3 pos, CubeColors cube_colors) noexcept;
 };
 

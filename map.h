@@ -19,15 +19,28 @@ class Map {
       DirectX::XMINT3(0, 1, 1), DirectX::XMINT3(0, 1, -1)   // front-up, back-up
   };
 
-  static constexpr uint8_t kMapWidth = 10;
-  static constexpr uint8_t kMapHeight = 2;
-  static constexpr uint8_t kMapDepth = 10;
-  static constexpr uint8_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
+  static constexpr uint32_t kMapWidth = 20;
+  static constexpr uint32_t kMapHeight = 20;
+  static constexpr uint32_t kMapDepth = 20;
+  static constexpr uint64_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
 
+  void Begin();
+  float Noise2D(float x, float y);
+  float FractalBrownianMotion(float x, float y, int num_octaves);
 
   TileType GetTileAt(int x, int y, int z);
   void SetTileAt(int x, int y, int z, TileType type);
 
  private:
-  inline static std::array<TileType, kMapSize> map_;
+  static constexpr int kPermutationCount = 256;
+
+  std::array<TileType, kMapSize> map_;
+  std::array<int, 2 * kPermutationCount> permutation_;
+
+  void CreatePermutationArray() noexcept;
+  DirectX::XMFLOAT2 GetConstantVector(int v) const noexcept;
+  float Fade(float t) const noexcept;
+  float Lerp(float t, float a1, float a2);
+
+
 };

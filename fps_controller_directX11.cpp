@@ -54,8 +54,18 @@
 
 static constexpr float kGravity = 1.f;
 
-static DirectX::XMFLOAT3 player_start_pos(0.f, 5.2f, 0.f);
+static DirectX::XMFLOAT3 player_start_pos(0.f, Map::kMapHeight, 0.f);
 static Player player;
+
+static constexpr CubeColors grass_colors = {
+    Vec3(153.f / 255.f, 76.f / 255.f, 0.f / 255.f),
+    Vec3(0.f / 255.f, 204.f / 255.f, 0.f / 255.f),
+    Vec3(102.f / 255.f, 51.f / 255.f, 0.f / 255.f),
+    Vec3(102.f / 255.f, 51.f / 255.f, 0.f / 255.f),
+    Vec3(102.f / 255.f, 51.f / 255.f, 0.f / 255.f),
+    Vec3(153.f / 255.f, 76.f / 255.f, 0.f / 255.f),
+};
+
 
 HWND window;
 RECT rect;
@@ -238,23 +248,22 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
                       
   GeometryBuilder geometryBuilder;
   Map map;
-
-  int color_var = 0;
+  map.Begin();
 
   for (int z = 0; z < Map::kMapDepth; z++) {
     for (int y = 0; y < Map::kMapHeight; y++) {
       for (int x = 0; x < Map::kMapWidth; x++) {
-        const auto color =
-            color_var % 2 == 0 ? Vec3(0.5f, 1.f, 0.6f) : Vec3(0.2f, 0.4f, 0.3f);
 
-        if (z > 2 && y > 0) {
-          continue;
+        float terrainHeight = map.FractalBrownianMotion(x, z, 8);
+        terrainHeight *= Map::kMapHeight;
+
+        if (y <= terrainHeight) {
+          geometryBuilder.GenerateCube(Vec3(x, y, z), grass_colors);
+          map.SetTileAt(x, y, z, TileType::kDirt);
+        } 
+        else {
+          map.SetTileAt(x, y, z, TileType::kNone);
         }
-
-        geometryBuilder.GenerateCube(Vec3(x, y, z), color);
-        map.SetTileAt(x, y, z, TileType::kDirt);
-
-        color_var++;
       }
     }
   }
