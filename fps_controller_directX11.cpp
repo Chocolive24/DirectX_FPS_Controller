@@ -704,14 +704,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
             if (x_direction != 0) {
               max_pos_x = (x_direction > 0) ? normalized_pos.x + 0.4f : max_pos_x;
               min_pos_x = (x_direction < 0) ? normalized_pos.x - 0.4f : min_pos_x;
-            } else if (z_direction != 0) {
+            }                                                      
+            else if (z_direction != 0) {                           
               max_pos_z = (z_direction > 0) ? normalized_pos.z + 0.4f : max_pos_z;
               min_pos_z = (z_direction < 0) ? normalized_pos.z - 0.4f : min_pos_z;
-            } else if (y_direction != 0) {
-              max_pos_y = (y_direction > 0) ? normalized_pos.y : max_pos_y;
-              min_pos_y = (y_direction < 0) ? normalized_pos.y : min_pos_y;
+            }                                                      
+            else if (y_direction != 0) {                           
+              max_pos_y = (y_direction > 0) ? normalized_pos.y + 0.4f : max_pos_y;
+              min_pos_y = (y_direction < 0) ? normalized_pos.y - 0.4f : min_pos_y;
             }
           }
+
+         player.is_in_water = map.GetTileAt(normalized_pos.x, normalized_pos.y,
+                                            normalized_pos.z) == TileType::kWater;
         }
 
         if (DirectX::XMVectorGetY(player.velocity) > -1.f) {
@@ -719,6 +724,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
           player.velocity = DirectX::XMVectorAdd(
               player.velocity, DirectX::XMLoadFloat3(&gravity_acc));
         }
+
         player.Update(dt_count);
 
         const auto player_pos_x = DirectX::XMVectorGetX(player.position);
@@ -727,9 +733,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
         if (player_pos_y <= min_pos_y) {
           player.velocity = DirectX::XMVectorSetY(player.velocity, 0.f);
+          player.is_grounded = true;
         }
-
-
 
         player.position = DirectX::XMVectorSetX(
             player.position, std::clamp(player_pos_x, min_pos_x, max_pos_x));
@@ -747,12 +752,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       const DirectX::XMFLOAT3 cam_pos_val(
           DirectX::XMVectorGetX(player.position),
-          DirectX::XMVectorGetY(player.position) + 1,
+          // +1.4 because 1 more cube height than player feet and 
+          // 0.4 because of the collision offset.
+          DirectX::XMVectorGetY(player.position) + 1.4, 
           DirectX::XMVectorGetZ(player.position));
 
       const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
-
-      std::cout << DirectX::XMVectorGetY(player.velocity) << '\n';
 
       // View matrix.
       const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);

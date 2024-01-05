@@ -43,6 +43,6 @@ public:
   void GenerateQuad(Vec3 right_up, Vec3 rigth_down, Vec3 left_down,
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
-  void GenerateCube(Vec3 pos, CubeColors cube_colors) noexcept;
+  void GenerateCube(Vec3 pos, CubeColors cube_colors, Vec3 scale = Vec3(1.f, 1.f, 1.f)) noexcept;
 };
 

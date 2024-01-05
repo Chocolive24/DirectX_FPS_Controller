@@ -19,13 +19,15 @@ public:
 
   PlayerMode mode = PlayerMode::kCreative;
 
-  bool isGrounded = false;
+  bool is_grounded = false;
+  bool is_in_water = false;
 
   void Begin(DirectX::XMFLOAT3 start_pos) noexcept;
   void Update(float dt) noexcept;
 
 private:
   static constexpr DirectX::XMFLOAT3 null_velocity = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
+ DirectX::XMVECTOR move_dir_;
   DirectX::XMVECTOR right_view_;
   DirectX::XMVECTOR front_move_;
   DirectX::XMVECTOR right_move_;
@@ -35,7 +37,7 @@ private:
 
   float yaw_ = -90.f, pitch_ = 0.f;
   float view_sensitivity_ = 15.f;
-  float move_speed_ = 10.f;
+  float move_speed_ = 7.f;
 
   void Move(float dt) noexcept;
   void RotateView(float dt) noexcept;

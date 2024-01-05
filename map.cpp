@@ -148,9 +148,9 @@ void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves
 
         static constexpr float base_surface = kMapHeight * 0.5f - 4;
 
-        float surface = base_surface + result * 8; // 50
+        float surface = base_surface + result * 50; // 50
 
-        static constexpr float water_level = 5; //35
+        static constexpr float water_level = 35; //35
 
         if (y < surface) {
           if (y < surface - 3) {
