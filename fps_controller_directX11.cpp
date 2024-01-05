@@ -66,6 +66,14 @@ static constexpr CubeColors grass_colors = {
     Vec3(153.f / 255.f, 76.f / 255.f, 0.f / 255.f),
 };
 
+static constexpr CubeColors stone_colors = {
+  Vec3(150.f / 255.f, 150.f / 255.f, 150.f / 255.f),
+  Vec3(150.f / 255.f, 150.f / 255.f, 150.f / 255.f),
+  Vec3(115.f / 255.f, 115.f / 255.f, 115.f / 255.f),
+  Vec3(115.f / 255.f, 115.f / 255.f, 115.f / 255.f),
+  Vec3(115.f / 255.f, 115.f / 255.f, 115.f / 255.f),
+  Vec3(150.f / 255.f, 150.f / 255.f, 150.f / 255.f),
+};
 
 HWND window;
 RECT rect;
@@ -247,22 +255,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   }
                       
   GeometryBuilder geometryBuilder;
+  geometryBuilder.Begin(Map::kMapSize * 24, Map::kMapSize * 36);
   Map map;
   map.Begin();
+  map.GenerateTerrain(0, 0, 0);
 
   for (int z = 0; z < Map::kMapDepth; z++) {
     for (int y = 0; y < Map::kMapHeight; y++) {
       for (int x = 0; x < Map::kMapWidth; x++) {
-
-        float terrainHeight = map.FractalBrownianMotion(x, z, 8);
-        terrainHeight *= Map::kMapHeight;
-
-        if (y <= terrainHeight) {
+        switch (map.GetTileAt(x, y, z)) { 
+        case TileType::kStone:
+            geometryBuilder.GenerateCube(Vec3(x, y, z), stone_colors);
+          break;
+        case TileType::kDirt:
           geometryBuilder.GenerateCube(Vec3(x, y, z), grass_colors);
-          map.SetTileAt(x, y, z, TileType::kDirt);
-        } 
-        else {
-          map.SetTileAt(x, y, z, TileType::kNone);
+          break;
         }
       }
     }
@@ -680,7 +687,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
                                        normalized_pos.y + neighbour.y,
                                        normalized_pos.z + neighbour.z);
       
-        if (map.GetTileAt(tile_pos.x, tile_pos.y, tile_pos.z) != TileType::kNone)
+        if (map.GetTileAt(tile_pos.x, tile_pos.y, tile_pos.z) != TileType::kAir)
         {
           const int x_direction = (neighbour.x > 0) ? 1 : ((neighbour.x < 0) ? -1 : 0);
           const int y_direction = (neighbour.y > 0) ? 1 : ((neighbour.y < 0) ? -1 : 0);
@@ -724,12 +731,14 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       const auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
 
+      std::cout << DirectX::XMVectorGetY(player.position) << '\n';
+
       // View matrix.
       const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);
       const auto view = DirectX::XMMatrixLookAtRH(v_cam_pos, focus_position, player.up_view);
       // Projection matrix
       DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
-          DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 100.f);
+          DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 200.f);
 
       auto final_matrix = view * projection;
 

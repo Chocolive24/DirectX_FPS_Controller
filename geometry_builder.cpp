@@ -1,5 +1,11 @@
 #include "geometry_builder.h"
 
+void GeometryBuilder::Begin(std::size_t vertex_alloc_size,
+                            std::size_t index_alloc_size) {
+  vertices.reserve(vertex_alloc_size);
+  indices.reserve(index_alloc_size);
+}
+
 void GeometryBuilder::GenerateQuad(Vec3 right_up, Vec3 rigth_down,
                                    Vec3 left_down, Vec3 left_up) {
   vertices.push_back({right_up, {25.f, 25.f}, {1, 0, 0}});
@@ -188,7 +194,9 @@ void GeometryBuilder::GenerateCube(Vec3 pos, CubeColors cube_colors) noexcept {
       Vertex{Vec3(-0.5f, -0.5f, 0.5f) + pos, Vec2(1.0f, 0.0f), cube_colors.left_color},
   };
 
-  vertices.insert(vertices.end(), cube_vertices.begin(), cube_vertices.end());
+  for (const auto& vertex : cube_vertices) {
+    vertices.push_back(vertex);
+  }
 
   // Create indices.
   constexpr int kIndiceCount = 36;
@@ -214,5 +222,7 @@ void GeometryBuilder::GenerateCube(Vec3 pos, CubeColors cube_colors) noexcept {
       indice_offset + 22, indice_offset + 21, indice_offset + 23,  // Left face.
   };
 
-  indices.insert(indices.begin(), cube_indices.begin(), cube_indices.end());
+  for (const auto& indice : cube_indices) {
+    indices.push_back(indice);
+  }
 }

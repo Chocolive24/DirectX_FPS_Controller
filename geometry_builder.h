@@ -32,6 +32,8 @@ public:
   std::vector<Vertex> vertices;
   std::vector<std::uint32_t> indices;
 
+  void Begin(std::size_t vertex_alloc_size = 0, std::size_t index_alloc_size = 0);
+
   void GenerateQuad(Vec3 right_up, Vec3 rigth_down, Vec3 left_down,
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
