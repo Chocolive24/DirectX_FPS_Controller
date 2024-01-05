@@ -4,6 +4,8 @@
 void Player::Begin(DirectX::XMFLOAT3 start_pos) noexcept {
   position = DirectX::XMLoadFloat3(&start_pos);
 
+  velocity = DirectX::XMLoadFloat3(&null_velocity);
+
   DirectX::XMFLOAT3 front_val(0.f, 0.f, -1.f);
   front_view = DirectX::XMLoadFloat3(&front_val);
 
@@ -24,36 +26,52 @@ void Player::Begin(DirectX::XMFLOAT3 start_pos) noexcept {
 }
 
 void Player::Update(const float dt) noexcept {
+  if (Input::state.key_1){
+    mode = PlayerMode::kClassic;
+  }
+  if (Input::state.key_2) {
+    mode = PlayerMode::kCreative;
+    velocity = DirectX::XMLoadFloat3(&null_velocity);
+  }
+
   RotateView(dt);
   Move(dt);
 }
 
 void Player::Move(const float dt) noexcept {
+  auto move_dir = DirectX::XMLoadFloat3(&null_velocity);
 
   if (Input::state.w) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(front_move_, move_speed_ * dt));
+    move_dir = DirectX::XMVectorAdd(move_dir, front_move_);
   }
   if (Input::state.s) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(front_move_, -move_speed_ * dt));
+    move_dir = DirectX::XMVectorAdd(move_dir, DirectX::XMVectorNegate(front_move_));
   }
   if (Input::state.a) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(right_move_, -move_speed_ * dt));
+    move_dir = DirectX::XMVectorAdd(move_dir, DirectX::XMVectorNegate(right_move_));
   }
   if (Input::state.d) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(right_move_, move_speed_ * dt));
+    move_dir = DirectX::XMVectorAdd(move_dir, right_move_);
   }
-  if (Input::state.l_shift) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(world_up_, -move_speed_ * dt));
+
+  if (mode == PlayerMode::kCreative)
+  {
+    if (Input::state.l_shift) {
+      move_dir =
+          DirectX::XMVectorAdd(move_dir, DirectX::XMVectorNegate(world_up_));
+    }
+    if (Input::state.space) {
+      move_dir = DirectX::XMVectorAdd(move_dir, world_up_);
+    }
   }
-  if (Input::state.space) {
-    position = DirectX::XMVectorAdd(
-        position, DirectX::XMVectorScale(world_up_, move_speed_ * dt));
-  }
+
+  // Apply the movement vecloity to the player for the frame. 
+  // It's a constant velocity not an acceleration so it isn't stored between frames.
+  auto movement = DirectX::XMVectorScale(DirectX::XMVector3Normalize(move_dir), 
+                                         move_speed_ * dt);
+  velocity = DirectX::XMVectorAdd(velocity, movement);
+  position = DirectX::XMVectorAdd(position, velocity);
+  velocity = DirectX::XMVectorSubtract(velocity, movement);
 }
 
 void Player::RotateView(const float dt) noexcept {

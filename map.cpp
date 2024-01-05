@@ -121,13 +121,14 @@ double Map::Grad(int hash, double x, double y) {
   return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
 }
 
-void Map::GenerateTerrain(float ampltiude, float frequency, std::uint8_t octaves) {
+void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves) {
+  const auto base_ampl = amplitude, base_freq = frequency;
   for (int z = 0; z < kMapDepth; z++) {
     for (int y = 0; y < kMapHeight; y++) {
       for (int x = 0; x < kMapWidth; x++) {
         float result = 0.0f;
-        float amplitude = 1.0f;
-        float frequency = 0.005f;
+        amplitude = base_ampl;
+        frequency = base_freq;
 
         for (int octave = 0; octave < 8; octave++) {
           float n = amplitude * Noise2D(x * frequency, z * frequency);
@@ -145,7 +146,11 @@ void Map::GenerateTerrain(float ampltiude, float frequency, std::uint8_t octaves
         //result *= 0.5;
         //result *= kMapHeight;
 
-        float surface = 60 + result * 50;
+        static constexpr float base_surface = kMapHeight * 0.5f - 4;
+
+        float surface = base_surface + result * 8; // 50
+
+        static constexpr float water_level = 5; //35
 
         if (y < surface) {
           if (y < surface - 3) {
@@ -155,7 +160,18 @@ void Map::GenerateTerrain(float ampltiude, float frequency, std::uint8_t octaves
             SetTileAt(x, y, z, TileType::kDirt);
           }
         } 
+        else if (y < water_level) {
+          SetTileAt(x, y, z, TileType::kWater);
 
+          // Set all the dirt downside the water to stone.
+          // It's a bit stupid but it's working for now.
+          if (GetTileAt(x, y - 1, z) == TileType::kDirt){
+            SetTileAt(x, y - 1, z, TileType::kStone);
+            SetTileAt(x, y - 2, z, TileType::kStone);
+            SetTileAt(x, y - 3, z, TileType::kStone);
+          }
+         
+        }
         else {
           SetTileAt(x, y, z, TileType::kAir);
         }

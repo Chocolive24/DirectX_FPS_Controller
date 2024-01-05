@@ -12,19 +12,25 @@ struct Vec3 {
   Vec3 operator+(Vec3 v) { return Vec3{x + v.x, y + v.y, z + v.z}; }
 };
 
+struct Vec4 {
+  float x = 0, y = 0, z = 0, w = 0;
+
+  Vec4 operator+(Vec4 v) { return Vec4{x + v.x, y + v.y, z + v.z, w + v.w}; }
+};
+
 struct Vertex {
   Vec3 position;
   Vec2 uv;
-  Vec3 color;
+  Vec4 color;
 };
 
 struct CubeColors {
-  Vec3 front_color;
-  Vec3 top_color;
-  Vec3 back_color;
-  Vec3 bottom_color;
-  Vec3 right_color;
-  Vec3 left_color;
+  Vec4 front_color;
+  Vec4 top_color;
+  Vec4 back_color;
+  Vec4 bottom_color;
+  Vec4 right_color;
+  Vec4 left_color;
 };
 
 class GeometryBuilder {

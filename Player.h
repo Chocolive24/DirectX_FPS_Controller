@@ -4,11 +4,20 @@
 
 #include <DirectXMath.h>
 
+enum class PlayerMode {
+  kNone = 0,
+  kClassic,
+  kCreative
+};
+
 class Player {
 public:
   DirectX::XMVECTOR position;
+  DirectX::XMVECTOR velocity;
   DirectX::XMVECTOR front_view;
   DirectX::XMVECTOR up_view;
+
+  PlayerMode mode = PlayerMode::kCreative;
 
   bool isGrounded = false;
 
@@ -16,6 +25,7 @@ public:
   void Update(float dt) noexcept;
 
 private:
+  static constexpr DirectX::XMFLOAT3 null_velocity = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
   DirectX::XMVECTOR right_view_;
   DirectX::XMVECTOR front_move_;
   DirectX::XMVECTOR right_move_;

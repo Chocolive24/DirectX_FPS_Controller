@@ -11,6 +11,8 @@ namespace Input
 	bool d;
 	bool l_shift;
 	bool space;
+    bool key_1;
+    bool key_2;
 	
 	bool mouse_relative;
 	int mouse_x;

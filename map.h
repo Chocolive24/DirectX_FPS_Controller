@@ -9,13 +9,14 @@ enum class TileType {
   kAir = 0,
   kDirt,
   kStone,
+  kWater,
 };
 
 class Map {
  public:
-  static constexpr uint32_t kMapWidth = 128;
-  static constexpr uint32_t kMapHeight = 128;
-  static constexpr uint32_t kMapDepth = 128;
+  static constexpr uint32_t kMapWidth = 32;
+  static constexpr uint32_t kMapHeight = 32;
+  static constexpr uint32_t kMapDepth = 32;
   static constexpr uint64_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
 
   static constexpr std::array<DirectX::XMINT3, 10> kNeighbourTiles = {
@@ -33,7 +34,7 @@ class Map {
   * @brief GenerateTerrain is a method that creates all the type of block in the map 
   * using 2D Perlin Noise with Fractal Brownian Motion to apply a smooth randomness.
   */
-  void GenerateTerrain(float ampltiude, float frequency, std::uint8_t octaves);
+  void GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves);
 
   TileType GetTileAt(int x, int y, int z);
   void SetTileAt(int x, int y, int z, TileType type);

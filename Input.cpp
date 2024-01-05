@@ -39,6 +39,12 @@ namespace Input {
          case VK_SPACE:
            Input::state.space = true;
            break;
+         case '1':
+           Input::state.key_1 = true;
+           break;
+         case '2':
+           Input::state.key_2 = true;
+           break;
        }
        break;
      case WM_KEYUP:
@@ -60,6 +66,12 @@ namespace Input {
            break;
          case VK_SPACE:
            Input::state.space = false;
+           break;
+         case '1':
+           Input::state.key_1 = false;
+           break;
+         case '2':
+           Input::state.key_2 = false;
            break;
        }
        break;
