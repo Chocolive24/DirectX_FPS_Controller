@@ -65,6 +65,6 @@ public:
   void GenerateQuad(Vec3 right_up, Vec3 rigth_down, Vec3 left_down,
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
-  void GenerateBlock(Vec3 pos, TileType tile_type) noexcept;
+  void GenerateBlock(Vec3 pos, BlockType tile_type) noexcept;
 };
 

@@ -125,7 +125,7 @@ void GeometryBuilder::GenerateQuad(Vec3 right_up, Vec3 rigth_down,
 //  indices.insert(indices.begin(), cube_indices.begin(), cube_indices.end());
 //}
 
-void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
+void GeometryBuilder::GenerateBlock(Vec3 pos, BlockType tile_type) noexcept {
   Vec4 color(1, 1, 1, 1);
   Vec3 scale_up(1, 1, 1);
   Vec3 scale_down(1, 1, 1);
@@ -134,9 +134,9 @@ void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
   BlockFaceUV side_uv;
 
   switch (tile_type) {
-    case TileType::kAir:
+    case BlockType::kAir:
       break;
-    case TileType::kGrass:
+    case BlockType::kGrass:
       up_uv = {
         .left_down = Vec2(kBlockPixelSize * kTopGrassTexPosX * kTexRatio, 
                           kBlockPixelSize * kSolidBlockTexPosY * kTexRatio),
@@ -162,7 +162,7 @@ void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
                            kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio)
       };
       break;
-    case TileType::kDirt:
+    case BlockType::kDirt:
       up_uv = {
         .left_down = Vec2(kBlockPixelSize * kDirtTexPosX * kTexRatio, 
                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio),
@@ -173,7 +173,7 @@ void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
       down_uv = up_uv;
       side_uv = up_uv;
       break;
-    case TileType::kStone:
+    case BlockType::kStone:
       up_uv = {
         .left_down = Vec2(kBlockPixelSize * kStoneTexPosX * kTexRatio, 
                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio),
@@ -184,7 +184,7 @@ void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
       down_uv = up_uv;
       side_uv = up_uv;
       break;
-    case TileType::kWaterSurface:
+    case BlockType::kWaterSurface:
       color = Vec4(1, 1, 1, 0.8f);
       scale_up = Vec3(1.f, 0.8f, 1.f);
 
@@ -201,7 +201,7 @@ void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
       down_uv = up_uv;
       side_uv = up_uv;
       break;
-    case TileType::kWaterDeep:
+    case BlockType::kWaterDeep:
       color = Vec4(1, 1, 1, 0.1f);
       up_uv = {
         .left_down = Vec2(kBlockPixelSize * kWaterTexPosX * kTexRatio,

@@ -3,17 +3,17 @@
 #include <iostream>
 
 void Player::Begin(DirectX::XMFLOAT3 start_pos) noexcept {
-  position = DirectX::XMLoadFloat3(&start_pos);
+  position_ = DirectX::XMLoadFloat3(&start_pos);
 
-  velocity = DirectX::XMLoadFloat3(&null_vector);
+  velocity_ = DirectX::XMLoadFloat3(&null_vector);
   forces_ = DirectX::XMLoadFloat3(&null_vector);
   impulses_ = DirectX::XMLoadFloat3(&null_vector);
 
   DirectX::XMFLOAT3 front_val(0.f, 0.f, -1.f);
-  front_view = DirectX::XMLoadFloat3(&front_val);
+  front_view_ = DirectX::XMLoadFloat3(&front_val);
 
   DirectX::XMFLOAT3 up_val(0.f, 1.f, 0.f);
-  up_view = DirectX::XMLoadFloat3(&up_val);
+  up_view_ = DirectX::XMLoadFloat3(&up_val);
 
   DirectX::XMFLOAT3 right_val(1.f, 0.f, 0.f);
   right_view_ = DirectX::XMLoadFloat3(&right_val);
@@ -29,13 +29,13 @@ void Player::Update(const float dt) noexcept {
 
   // a = F / m (mass of the player is 1 to simplify the physics).
   // = > a = F
-  velocity = DirectX::XMVectorAdd(velocity, DirectX::XMVectorScale(forces_, dt));
-  velocity = DirectX::XMVectorAdd(velocity, impulses_);
+  velocity_ = DirectX::XMVectorAdd(velocity_, DirectX::XMVectorScale(forces_, dt));
+  velocity_ = DirectX::XMVectorAdd(velocity_, impulses_);
 
-  position = DirectX::XMVectorAdd(position, DirectX::XMVectorScale(velocity, dt));
+  position_ = DirectX::XMVectorAdd(position_, DirectX::XMVectorScale(velocity_, dt));
 
   // Remove the impulses from the velocity.
-  velocity = DirectX::XMVectorSubtract(velocity, impulses_);
+  velocity_ = DirectX::XMVectorSubtract(velocity_, impulses_);
 
   // Reset physics vectors.
   move_dir_ = DirectX::XMLoadFloat3(&null_vector);
@@ -44,7 +44,7 @@ void Player::Update(const float dt) noexcept {
 }
 
 void Player::HandleJump() noexcept {
-  if (Input::state.space && mode == PlayerMode::kClassic) {
+  if (Input::state.space && mode_ == PlayerMode::kClassic) {
     if (is_grounded && !is_in_water) {
       ApplyForce(DirectX::XMVECTOR{0, 1700.f, 0}, ForceMode::kForce);
       is_grounded = false;
@@ -58,11 +58,11 @@ void Player::HandleJump() noexcept {
 
 void Player::HandlePlayerMode() noexcept {
   if (Input::state.key_1) {
-    mode = PlayerMode::kClassic;
+    mode_ = PlayerMode::kClassic;
   }
   if (Input::state.key_2) {
-    mode = PlayerMode::kCreative;
-    velocity = DirectX::XMLoadFloat3(&null_vector);
+    mode_ = PlayerMode::kCreative;
+    velocity_ = DirectX::XMLoadFloat3(&null_vector);
     forces_ = DirectX::XMLoadFloat3(&null_vector);
   }
 }
@@ -81,7 +81,7 @@ void Player::HandleMovements() noexcept {
     move_dir_ = DirectX::XMVectorAdd(move_dir_, right_move_);
   }
 
-  if (mode == PlayerMode::kCreative)
+  if (mode_ == PlayerMode::kCreative)
   {
     if (Input::state.l_shift) {
       move_dir_ =
@@ -120,14 +120,14 @@ void Player::UpdateVectors() noexcept {
                 cos(DirectX::XMConvertToRadians(pitch_));
 
   DirectX::XMVECTOR v_new_front_view = DirectX::XMLoadFloat3(&new_front_view);
-  front_view = DirectX::XMVector3Normalize(v_new_front_view);
+  front_view_ = DirectX::XMVector3Normalize(v_new_front_view);
 
   // normalize the vectors, because their length gets closer to 0 the more you
   // look up or down which results in slower movement
   right_view_ =
-      DirectX::XMVector3Normalize(DirectX::XMVector3Cross(front_view, world_up_));
-  up_view = DirectX::XMVector3Normalize(
-      DirectX::XMVector3Cross(right_view_, front_view));
+      DirectX::XMVector3Normalize(DirectX::XMVector3Cross(front_view_, world_up_));
+  up_view_ = DirectX::XMVector3Normalize(
+      DirectX::XMVector3Cross(right_view_, front_view_));
 
   // Update movement vectors.
   DirectX::XMFLOAT3 new_front_move;

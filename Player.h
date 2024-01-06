@@ -17,13 +17,6 @@ enum class ForceMode {
 
 class Player {
 public:
-  DirectX::XMVECTOR position;
-  DirectX::XMVECTOR velocity;
-  DirectX::XMVECTOR front_view;
-  DirectX::XMVECTOR up_view;
-
-  PlayerMode mode = PlayerMode::kCreative;
-
   bool is_grounded = false;
   bool is_in_water = false;
 
@@ -32,8 +25,24 @@ public:
 
   void ApplyForce(DirectX::XMVECTOR force, ForceMode force_mode) noexcept;
 
+  [[nodiscard]] PlayerMode mode() const noexcept { return mode_; };
+  [[nodiscard]] DirectX::XMVECTOR position() const noexcept { return position_; };
+  [[nodiscard]] DirectX::XMVECTOR velocity() const noexcept { return velocity_; };
+  [[nodiscard]] DirectX::XMVECTOR front_view() const noexcept { return front_view_; };
+  [[nodiscard]] DirectX::XMVECTOR up_view() const noexcept { return up_view_; };
+
+  void set_position(DirectX::XMVECTOR position) noexcept { position_ = position; };
+  void set_velocity(DirectX::XMVECTOR velocity) noexcept { velocity_ = velocity; };
+
 private:
   static constexpr DirectX::XMFLOAT3 null_vector = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
+
+  PlayerMode mode_ = PlayerMode::kCreative;
+
+  DirectX::XMVECTOR position_;
+  DirectX::XMVECTOR velocity_;
+  DirectX::XMVECTOR front_view_;
+  DirectX::XMVECTOR up_view_;
 
   DirectX::XMVECTOR forces_;
   DirectX::XMVECTOR impulses_;

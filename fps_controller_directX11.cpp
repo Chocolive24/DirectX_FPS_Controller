@@ -242,21 +242,21 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   for (int z = 0; z < Map::kMapDepth; z++) {
     for (int y = 0; y < Map::kMapHeight; y++) {
       for (int x = 0; x < Map::kMapWidth; x++) {
-        switch (map.GetTileAt(x, y, z)) { 
-          case TileType::kStone:
-            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kStone);
+        switch (map.GetBlockAt(x, y, z)) { 
+          case BlockType::kStone:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), BlockType::kStone);
             break;
-          case TileType::kDirt:
-            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kDirt);
+          case BlockType::kDirt:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), BlockType::kDirt);
             break;
-          case TileType::kGrass:
-            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kGrass);
+          case BlockType::kGrass:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), BlockType::kGrass);
             break;
-          case TileType::kWaterSurface:
-            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kWaterSurface);
+          case BlockType::kWaterSurface:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), BlockType::kWaterSurface);
             break;
-          case TileType::kWaterDeep:
-            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kWaterDeep);
+          case BlockType::kWaterDeep:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), BlockType::kWaterDeep);
             break;
           default:
             break;
@@ -264,6 +264,9 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       }
     }
   }
+
+  std::vector<std::pair<std::uint32_t, float>> block_distances;
+  block_distances.resize(geometry_builder.indices.size());
 
   ID3D11Buffer* vbuffer;       
   {                            
@@ -463,8 +466,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
     ID3D11Texture2D* texture;
     device->CreateTexture2D(&desc, &data, &texture);
-    device->CreateShaderResourceView((ID3D11Resource*)texture, NULL,
-                                     &textureView);
+    device->CreateShaderResourceView((ID3D11Resource*)texture, NULL, &textureView);
     texture->Release();
   }
 
@@ -505,7 +507,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     // disable culling
     D3D11_RASTERIZER_DESC desc = {
         .FillMode = D3D11_FILL_SOLID,
-        .CullMode = D3D11_CULL_FRONT,
+        .CullMode = D3D11_CULL_NONE,
     };
     device->CreateRasterizerState(&desc, &rasterizerState);
   }
@@ -650,7 +652,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
       float aspect = (float)width / height;
 
-      if (player.mode == PlayerMode::kClassic)
+      if (player.mode() == PlayerMode::kClassic)
       {
         static constexpr auto max_limit = (std::numeric_limits<float>::max)();
         static constexpr auto lowest_limit = (std::numeric_limits<float>::lowest)();
@@ -665,19 +667,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         float min_pos_z = lowest_limit;
 
         const DirectX::XMINT3 normalized_pos(
-            std::floor(DirectX::XMVectorGetX(player.position) + 0.5f),
-            std::floor(DirectX::XMVectorGetY(player.position) + 0.5f),
-            std::floor(DirectX::XMVectorGetZ(player.position) + 0.5f));
+            std::floor(DirectX::XMVectorGetX(player.position()) + 0.5f),
+            std::floor(DirectX::XMVectorGetY(player.position()) + 0.5f),
+            std::floor(DirectX::XMVectorGetZ(player.position()) + 0.5f));
 
         for (const auto& neighbour : Map::kNeighbourTiles) {
           const DirectX::XMINT3 tile_pos(normalized_pos.x + neighbour.x,
                                          normalized_pos.y + neighbour.y,
                                          normalized_pos.z + neighbour.z);
 
-          const auto tile = map.GetTileAt(tile_pos.x, tile_pos.y, tile_pos.z);
+          const auto tile = map.GetBlockAt(tile_pos.x, tile_pos.y, tile_pos.z);
 
-          if (tile != TileType::kAir && tile != TileType::kWaterSurface &&
-              tile != TileType::kWaterDeep) {
+          if (tile != BlockType::kAir && tile != BlockType::kWaterSurface &&
+              tile != BlockType::kWaterDeep) {
 
             const int x_direction =
                 (neighbour.x > 0) ? 1 : ((neighbour.x < 0) ? -1 : 0);
@@ -702,10 +704,10 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         }
 
         const auto tile_at_player_pos =
-            map.GetTileAt(normalized_pos.x, normalized_pos.y, normalized_pos.z);
+            map.GetBlockAt(normalized_pos.x, normalized_pos.y, normalized_pos.z);
 
-        player.is_in_water = tile_at_player_pos == TileType::kWaterSurface ||
-                             tile_at_player_pos == TileType::kWaterDeep;
+        player.is_in_water = tile_at_player_pos == BlockType::kWaterSurface ||
+                             tile_at_player_pos == BlockType::kWaterDeep;
  
         static float current_gravity;
         static ForceMode gravity_mode;
@@ -713,7 +715,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         current_gravity = player.is_in_water ? kWaterGravity : kGravity;
         gravity_mode = player.is_in_water ? ForceMode::kImpulse : ForceMode::kForce;
 
-        if (DirectX::XMVectorGetY(player.velocity) > -100.f) {
+        if (DirectX::XMVectorGetY(player.velocity()) > -100.f) {
           player.ApplyForce(DirectX::XMVECTOR{0.f, current_gravity, 0.f}, gravity_mode);
         }
 
@@ -722,45 +724,43 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         //std::cout << DirectX::XMVectorGetY(player.velocity) << '\n';
         //std::cout << min_pos_y << '\n';
 
-        const auto player_pos_x = DirectX::XMVectorGetX(player.position);
-        const auto player_pos_y = DirectX::XMVectorGetY(player.position);
-        const auto player_pos_z = DirectX::XMVectorGetZ(player.position);
+        const auto player_pos_x = DirectX::XMVectorGetX(player.position());
+        const auto player_pos_y = DirectX::XMVectorGetY(player.position());
+        const auto player_pos_z = DirectX::XMVectorGetZ(player.position());
 
         if (player_pos_y <= min_pos_y) {
-          player.velocity = DirectX::XMVectorSetY(player.velocity, 0.f);
+          player.set_velocity(DirectX::XMVectorSetY(player.velocity(), 0.f));
           player.is_grounded = true;
         } 
         else {
-          player.is_grounded = false;
+          //player.is_grounded = false;
         }
 
-        player.position = DirectX::XMVectorSetX(
-            player.position, std::clamp(player_pos_x, min_pos_x, max_pos_x));
-                                                                          
-        player.position = DirectX::XMVectorSetY(                          
-            player.position, std::clamp(player_pos_y, min_pos_y, max_pos_y));
-                                                                          
-        player.position = DirectX::XMVectorSetZ(                          
-            player.position, std::clamp(player_pos_z, min_pos_z, max_pos_z));
+        player.set_position(DirectX::XMVectorSetX(
+            player.position(), std::clamp(player_pos_x, min_pos_x, max_pos_x)));
+
+        player.set_position(DirectX::XMVectorSetY(
+            player.position(), std::clamp(player_pos_y, min_pos_y, max_pos_y)));
+
+        player.set_position(DirectX::XMVectorSetZ(
+            player.position(), std::clamp(player_pos_z, min_pos_z, max_pos_z)));                                                       
       }
       else {
         player.Update(dt_count);
       }
-            
-      std::cout << player.is_grounded << '\n';
 
       const DirectX::XMFLOAT3 cam_pos_val(
-          DirectX::XMVectorGetX(player.position),
+          DirectX::XMVectorGetX(player.position()),
           // +1.4 because 1 more cube height than player feet and 
           // 0.4 because of the collision offset.
-          DirectX::XMVectorGetY(player.position) + 1.4, 
-          DirectX::XMVectorGetZ(player.position));
+          DirectX::XMVectorGetY(player.position()) + 1.4, 
+          DirectX::XMVectorGetZ(player.position()));
 
       auto v_cam_pos = DirectX::XMLoadFloat3(&cam_pos_val);
 
       // View matrix.
-      const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view);
-      const auto view = DirectX::XMMatrixLookAtRH(v_cam_pos, focus_position, player.up_view);
+      const auto focus_position = DirectX::XMVectorAdd(v_cam_pos, player.front_view());
+      const auto view = DirectX::XMMatrixLookAtRH(v_cam_pos, focus_position, player.up_view());
       // Projection matrix
       DirectX::XMMATRIX projection = DirectX::XMMatrixPerspectiveFovRH(
           DirectX::XMConvertToRadians(45.f), aspect, 0.1f, 200.f);
@@ -798,6 +798,48 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       context->OMSetBlendState(blendState, NULL, ~0U);
       context->OMSetDepthStencilState(depthState, 0);
       context->OMSetRenderTargets(1, &rtView, dsView);
+
+      //int block_nbr = 0;
+
+      //for (int z = 0; z < Map::kMapDepth; z++) {
+      //  for (int y = 0; y < Map::kMapHeight; y++) {
+      //    for (int x = 0; x < Map::kMapWidth; x++) {
+      //      const auto index = z * Map::kMapDepth * Map::kMapHeight + y * 
+      //                         Map::kMapWidth + x;
+
+      //      const auto block_type = map.GetBlockAtIndex(index);
+
+      //      if (block_type != BlockType::kAir) {
+      //        const auto block_pos = DirectX::XMVECTOR{static_cast<float>(x),
+      //                                                 static_cast<float>(y),
+      //                                                 static_cast<float>(z)};
+      //        DirectX::XMVECTOR diffVector =
+      //            DirectX::XMVectorSubtract(block_pos, player.position());
+      //        float distance =
+      //            DirectX::XMVectorGetX(DirectX::XMVector3Length(diffVector));
+
+      //        const auto first_indice = 36 * block_nbr;
+      //        for (int i = first_indice; i < first_indice + 36; i++) {
+      //          const auto indice = geometry_builder.indices[i];
+      //          block_distances[i] = std::make_pair(indice, distance);
+      //        }
+
+      //        block_nbr++;
+      //      }
+      //    }
+      //  }
+      //}
+
+      //// Sort the cubes based on their distance to the player.
+      //std::sort(block_distances.begin(), block_distances.end(),
+      //          [](const std::pair<int, float>& a, const std::pair<int, float>& b) {
+      //            return a.second > b.second && a.first < b.first;  // Sort in descending order based on distance
+      //          }
+      //);
+
+      //for (std::size_t i = 0; i < block_distances.size(); i++) {
+      //  geometry_builder.indices[i] = block_distances[i].first;
+      //}
 
       context->DrawIndexed(geometry_builder.indices.size(), 0, 0);
     }

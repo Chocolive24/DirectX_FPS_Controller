@@ -5,8 +5,8 @@
 #include <array>
 #include <vector>
 
-enum class TileType {
-  kAir = 0,
+enum class BlockType {
+  kAir,
   kGrass,
   kDirt,
   kStone,
@@ -16,8 +16,8 @@ enum class TileType {
 
 class Map {
  public:
-  static constexpr uint32_t kMapWidth = 50;
-  static constexpr uint32_t kMapHeight = 80;
+  static constexpr uint32_t kMapWidth = 128;
+  static constexpr uint32_t kMapHeight = 128;
   static constexpr uint32_t kMapDepth = 128;
   static constexpr uint64_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
 
@@ -38,11 +38,18 @@ class Map {
   */
   void GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves);
 
-  TileType GetTileAt(int x, int y, int z);
-  void SetTileAt(int x, int y, int z, TileType type);
+  BlockType GetBlockAt(int x, int y, int z);
+  BlockType GetBlockAtIndex(int index) { 
+    if (index < 0 || index >= map_.size()) {
+      return BlockType::kAir;
+    }
+
+    return map_[index];
+  }
+  void SetBlockAt(int x, int y, int z, BlockType type);
 
  private:
-  std::vector<TileType> map_;
+  std::vector<BlockType> map_;
 
   static constexpr std::uint16_t kPermutationCount = 256;
   static constexpr std::array<std::uint8_t, 2 * kPermutationCount> permutation_ = {

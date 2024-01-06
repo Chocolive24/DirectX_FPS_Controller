@@ -5,7 +5,7 @@
 #include <iostream>
 
 void Map::Begin() { 
-    map_.resize(kMapSize, TileType::kAir);
+    map_.resize(kMapSize, BlockType::kAir);
     //CreatePermutationArray(); 
 }
 
@@ -154,54 +154,54 @@ void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves
 
         if (y < surface) {
           if (y < surface - 3) {
-            SetTileAt(x, y, z, TileType::kStone);
+            SetBlockAt(x, y, z, BlockType::kStone);
           } 
           else if (y < surface - 1) {
-            SetTileAt(x, y, z, TileType::kDirt);
+            SetBlockAt(x, y, z, BlockType::kDirt);
           }
           else {
-            SetTileAt(x, y, z, TileType::kGrass);
+            SetBlockAt(x, y, z, BlockType::kGrass);
           }
         } 
         else if (y < water_level) {
           if (y == water_level - 1) {
-            SetTileAt(x, y, z, TileType::kWaterSurface);
+            SetBlockAt(x, y, z, BlockType::kWaterSurface);
           } 
           else {
-            SetTileAt(x, y, z, TileType::kWaterDeep);
+            SetBlockAt(x, y, z, BlockType::kWaterDeep);
           } 
           // Set all the dirt and grass downside the water to stone.
           // It's a bit stupid but it's working for now.
-          if (GetTileAt(x, y - 1, z) == TileType::kGrass) {
-            SetTileAt(x, y - 1, z, TileType::kStone);
-            SetTileAt(x, y - 2, z, TileType::kStone);
-            SetTileAt(x, y - 3, z, TileType::kStone);
+          if (GetBlockAt(x, y - 1, z) == BlockType::kGrass) {
+            SetBlockAt(x, y - 1, z, BlockType::kStone);
+            SetBlockAt(x, y - 2, z, BlockType::kStone);
+            SetBlockAt(x, y - 3, z, BlockType::kStone);
           }
          
         }
         else {
-          SetTileAt(x, y, z, TileType::kAir);
+          SetBlockAt(x, y, z, BlockType::kAir);
         }
       }
     }
   }
 }
 
-TileType Map::GetTileAt(int x, int y, int z) {
+BlockType Map::GetBlockAt(int x, int y, int z) {
   if (x < 0 || x >= kMapWidth || y < 0 || y >= kMapHeight || 
       z < 0 || z >= kMapDepth) {
-    return TileType::kAir;
+    return BlockType::kAir;
   }
 
   const auto index = z * kMapDepth * kMapHeight + y * kMapWidth + x;
   if (index < 0 || index >= map_.size()) {
-    return TileType::kAir;
+    return BlockType::kAir;
   }
 
   return map_[index];
 }
 
-void Map::SetTileAt(int x, int y, int z, TileType type) {
+void Map::SetBlockAt(int x, int y, int z, BlockType type) {
   const auto index = z * kMapDepth * kMapHeight + y * kMapWidth + x;
   if (index < 0 || index >= map_.size()) {
     return;
