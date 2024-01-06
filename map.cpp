@@ -130,7 +130,7 @@ void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves
         amplitude = base_ampl;
         frequency = base_freq;
 
-        for (int octave = 0; octave < 8; octave++) {
+        for (int octave = 0; octave < octaves; octave++) {
           float n = amplitude * Noise2D(x * frequency, z * frequency);
 
           result += n;

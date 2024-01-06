@@ -16,8 +16,8 @@ enum class TileType {
 
 class Map {
  public:
-  static constexpr uint32_t kMapWidth = 128;
-  static constexpr uint32_t kMapHeight = 128;
+  static constexpr uint32_t kMapWidth = 50;
+  static constexpr uint32_t kMapHeight = 80;
   static constexpr uint32_t kMapDepth = 128;
   static constexpr uint64_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
 
