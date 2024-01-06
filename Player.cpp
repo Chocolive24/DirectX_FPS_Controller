@@ -1,10 +1,12 @@
-#include "Player.h"
+#include "player.h"
+
 #include <iostream>
 
 void Player::Begin(DirectX::XMFLOAT3 start_pos) noexcept {
   position = DirectX::XMLoadFloat3(&start_pos);
 
-  velocity = DirectX::XMLoadFloat3(&null_velocity);
+  velocity = DirectX::XMLoadFloat3(&null_vector);
+  forces_ = DirectX::XMLoadFloat3(&null_vector);
 
   DirectX::XMFLOAT3 front_val(0.f, 0.f, -1.f);
   front_view = DirectX::XMLoadFloat3(&front_val);
@@ -31,35 +33,40 @@ void Player::Update(const float dt) noexcept {
   }
   if (Input::state.key_2) {
     mode = PlayerMode::kCreative;
-    velocity = DirectX::XMLoadFloat3(&null_velocity);
+    velocity = DirectX::XMLoadFloat3(&null_vector);
+    forces_ = DirectX::XMLoadFloat3(&null_vector);
   }
 
   RotateView(dt);
-
+  
   // Jump.
   if (Input::state.space && mode == PlayerMode::kClassic) {
     if (is_grounded && !is_in_water) {
-      velocity = DirectX::XMVectorAdd(
-          velocity, DirectX::XMVectorScale(world_up_, 0.075f));
+      ApplyForce(DirectX::XMFLOAT3(0, 10.8f, 0));
       is_grounded = false;
     } 
     else if (is_in_water) {
       move_dir_ = DirectX::XMVectorAdd(move_dir_, world_up_);
+      // pas bien car monte pas assez haut en sortant de l'eau si j'appuie aussi sur W.
     }
-
   }
 
-  // Apply the movement vecloity to the player for the frame.
-  // It's a constant velocity not an acceleration so it isn't stored between
-  // frames.
+  // a = F / m (mass of the player is 1 to simplify the physics).
+  // = > a = F
+  // Update velocity as a function of acceleration over delta time.
+  velocity = DirectX::XMVectorAdd(velocity, DirectX::XMVectorScale(forces_, dt));
+
+  // Apply the movement velocity to the player for the frame.
+  // It's a constant velocity not an acceleration so it isn't stored between frames.
   Move(dt);
   auto movement = DirectX::XMVectorScale(DirectX::XMVector3Normalize(move_dir_),
                                          move_speed_ * dt);
   velocity = DirectX::XMVectorAdd(velocity, movement);
   position = DirectX::XMVectorAdd(position, velocity);
 
-  move_dir_ = DirectX::XMLoadFloat3(&null_velocity);
+  move_dir_ = DirectX::XMLoadFloat3(&null_vector);
   velocity = DirectX::XMVectorSubtract(velocity, movement);
+  forces_ = DirectX::XMLoadFloat3(&null_vector);
 }
 
 void Player::Move(const float dt) noexcept {
@@ -129,4 +136,8 @@ void Player::UpdateVectors() noexcept {
 
   right_move_ = DirectX::XMVector3Normalize(
       DirectX::XMVector3Cross(front_move_, world_up_));
+}
+
+void Player::ApplyForce(DirectX::XMFLOAT3 force) noexcept {
+  forces_ = DirectX::XMVectorAdd(forces_, DirectX::XMLoadFloat3(&force));
 }

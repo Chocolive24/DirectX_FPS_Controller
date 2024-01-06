@@ -7,9 +7,11 @@
 
 enum class TileType {
   kAir = 0,
+  kGrass,
   kDirt,
   kStone,
-  kWater,
+  kWaterSurface,
+  kWaterDeep,
 };
 
 class Map {

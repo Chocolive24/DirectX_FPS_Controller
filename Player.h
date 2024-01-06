@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Input.h"
+#include "input.h"
 
 #include <DirectXMath.h>
 
@@ -25,9 +25,12 @@ public:
   void Begin(DirectX::XMFLOAT3 start_pos) noexcept;
   void Update(float dt) noexcept;
 
+  void ApplyForce(DirectX::XMFLOAT3 force) noexcept;
+
 private:
-  static constexpr DirectX::XMFLOAT3 null_velocity = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
- DirectX::XMVECTOR move_dir_;
+  static constexpr DirectX::XMFLOAT3 null_vector = DirectX::XMFLOAT3(0.f, 0.f, 0.f);
+  DirectX::XMVECTOR forces_;
+  DirectX::XMVECTOR move_dir_;
   DirectX::XMVECTOR right_view_;
   DirectX::XMVECTOR front_move_;
   DirectX::XMVECTOR right_move_;

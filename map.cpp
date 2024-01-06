@@ -155,17 +155,24 @@ void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves
         if (y < surface) {
           if (y < surface - 3) {
             SetTileAt(x, y, z, TileType::kStone);
+          } 
+          else if (y < surface - 1) {
+            SetTileAt(x, y, z, TileType::kDirt);
           }
           else {
-            SetTileAt(x, y, z, TileType::kDirt);
+            SetTileAt(x, y, z, TileType::kGrass);
           }
         } 
         else if (y < water_level) {
-          SetTileAt(x, y, z, TileType::kWater);
-
-          // Set all the dirt downside the water to stone.
+          if (y == water_level - 1) {
+            SetTileAt(x, y, z, TileType::kWaterSurface);
+          } 
+          else {
+            SetTileAt(x, y, z, TileType::kWaterDeep);
+          } 
+          // Set all the dirt and grass downside the water to stone.
           // It's a bit stupid but it's working for now.
-          if (GetTileAt(x, y - 1, z) == TileType::kDirt){
+          if (GetTileAt(x, y - 1, z) == TileType::kGrass) {
             SetTileAt(x, y - 1, z, TileType::kStone);
             SetTileAt(x, y - 2, z, TileType::kStone);
             SetTileAt(x, y - 3, z, TileType::kStone);

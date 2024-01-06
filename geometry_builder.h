@@ -1,5 +1,7 @@
 #pragma once
 
+#include "map.h"
+
 #include <vector>
 
 struct Vec2 {
@@ -24,6 +26,13 @@ struct Vertex {
   Vec4 color;
 };
 
+struct BlockFaceUV {
+  Vec2 left_down = Vec2(0, 0);
+  Vec2 left_up = Vec2(0, 1);
+  Vec2 right_up = Vec2(1, 1);
+  Vec2 right_down = Vec2(1, 0);
+};
+
 struct CubeColors {
   Vec4 front_color;
   Vec4 top_color;
@@ -35,6 +44,19 @@ struct CubeColors {
 
 class GeometryBuilder {
 public:
+  static constexpr std::uint8_t kBlockPixelSize = 16;
+  static constexpr std::uint16_t kTextureSize = 256;
+  static constexpr float kTexRatio = 1.f / kTextureSize;
+
+  static constexpr std::uint8_t kTopGrassTexPosX = 0;
+  static constexpr std::uint8_t kSideGrassTexPosX = 1;
+  static constexpr std::uint8_t kDirtTexPosX = 2;
+  static constexpr std::uint8_t kStoneTexPosX = 3;
+  static constexpr std::uint8_t kSolidBlockTexPosY = 15;
+
+  static constexpr std::uint8_t kWaterTexPosX = 0;
+  static constexpr std::uint8_t kWaterTexPosY = 0;
+
   std::vector<Vertex> vertices;
   std::vector<std::uint32_t> indices;
 
@@ -43,6 +65,6 @@ public:
   void GenerateQuad(Vec3 right_up, Vec3 rigth_down, Vec3 left_down,
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
-  void GenerateCube(Vec3 pos, CubeColors cube_colors, Vec3 scale = Vec3(1.f, 1.f, 1.f)) noexcept;
+  void GenerateBlock(Vec3 pos, TileType tile_type) noexcept;
 };
 

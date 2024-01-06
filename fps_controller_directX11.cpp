@@ -1,7 +1,7 @@
 // example how to set up D3D11 rendering on Windows in C
 
 #include "geometry_builder.h"
-#include "Input.h"
+#include "input.h"
 #include "player.h"
 #include "map.h"
 
@@ -13,6 +13,9 @@
 #include <dxgi1_3.h>
 #include <dxgidebug.h>
 #include <windows.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #define _USE_MATH_DEFINES
 #include <float.h>
@@ -27,7 +30,6 @@
 #include <iostream>
 #include <algorithm>
 #include <limits>
-
 
 // replace this with your favorite Assert() implementation
 #define Assert(cond)             \
@@ -46,43 +48,47 @@
 #define STR2(x) #x
 #define STR(x) STR2(x)
 
-// TODO
-// couleur tiles = uniform a set dans frag shader 
-
-// Faire des FLOAT3 au lieu de VECTOR3 car trop chiant d'accéder aux valeurs. (pour player)
-
-
-static constexpr float kGravity = -0.3f;
+static constexpr float kGravity = -0.3;
+static constexpr float kWaterGravity = -0.1;
 
 static DirectX::XMFLOAT3 player_start_pos(0.f, Map::kMapHeight, 0.f);
 static Player player;
 
-static constexpr CubeColors grass_colors = {
-    Vec4(153.f / 255.f, 76.f / 255.f, 0.f / 255.f, 1.f),
-    Vec4(0.f / 255.f, 204.f / 255.f, 0.f / 255.f,  1.f),
-    Vec4(102.f / 255.f, 51.f / 255.f, 0.f / 255.f, 1.f),
-    Vec4(102.f / 255.f, 51.f / 255.f, 0.f / 255.f, 1.f),
-    Vec4(102.f / 255.f, 51.f / 255.f, 0.f / 255.f, 1.f),
-    Vec4(153.f / 255.f, 76.f / 255.f, 0.f / 255.f, 1.f),
-};
-
-static constexpr CubeColors stone_colors = {
-  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
-  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
-  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
-  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
-  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
-  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
-};
-
-static constexpr CubeColors water_colors = {
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
-};
+//static constexpr CubeColors grass_colors = {
+//    Vec4(0.f, 204.f / 255.f, 0.f, 1.f),
+//    Vec4(0.f, 204.f / 255.f, 0.f, 1.f),
+//    Vec4(0.f, 150.f / 255.f, 0.f, 1.f),
+//    Vec4(0.f, 150.f / 255.f, 0.f, 1.f),
+//    Vec4(0.f, 204.f / 255.f, 0.f, 1.f),
+//    Vec4(0.f, 150.f / 255.f, 0.f, 1.f),
+//};
+//
+//static constexpr CubeColors dirt_colors = {
+//    Vec4(153.f / 255.f, 76.f / 255.f, 0.f, 1.f),
+//    Vec4(153.f / 255.f, 76.f / 255.f, 0.f, 1.f),
+//    Vec4(102.f / 255.f, 51.f / 255.f, 0.f, 1.f),
+//    Vec4(102.f / 255.f, 51.f / 255.f, 0.f, 1.f),
+//    Vec4(102.f / 255.f, 51.f / 255.f, 0.f, 1.f),
+//    Vec4(153.f / 255.f, 76.f / 255.f, 0.f, 1.f),
+//};
+//
+//static constexpr CubeColors stone_colors = {
+//  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
+//  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
+//  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
+//  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
+//  Vec4(115.f / 255.f, 115.f / 255.f, 115.f / 255.f, 1.f),
+//  Vec4(150.f / 255.f, 150.f / 255.f, 150.f / 255.f, 1.f),
+//};
+//
+//static constexpr CubeColors water_colors = {
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//    Vec4(0.f, 128.f / 255.f, 1.f, 0.75f),
+//};
 
 HWND window;
 RECT rect;
@@ -263,8 +269,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     dxgiDevice->Release();
   }
                       
-  GeometryBuilder geometryBuilder;
-  geometryBuilder.Begin(Map::kMapSize * 24, Map::kMapSize * 36);
+  GeometryBuilder geometry_builder;
+  geometry_builder.Begin(Map::kMapSize * 24, Map::kMapSize * 36);
   Map map;
   map.Begin();
   map.GenerateTerrain(1.f, 0.005f, 8);
@@ -273,14 +279,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     for (int y = 0; y < Map::kMapHeight; y++) {
       for (int x = 0; x < Map::kMapWidth; x++) {
         switch (map.GetTileAt(x, y, z)) { 
-        case TileType::kStone:
-            geometryBuilder.GenerateCube(Vec3(x, y, z), stone_colors);
-          break;
-        case TileType::kDirt:
-          geometryBuilder.GenerateCube(Vec3(x, y, z), grass_colors);
-          break;
-        case TileType::kWater:
-          geometryBuilder.GenerateCube(Vec3(x, y, z), water_colors);
+          case TileType::kStone:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kStone);
+            break;
+          case TileType::kDirt:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kDirt);
+            break;
+          case TileType::kGrass:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kGrass);
+            break;
+          case TileType::kWaterSurface:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kWaterSurface);
+            break;
+          case TileType::kWaterDeep:
+            geometry_builder.GenerateBlock(Vec3(x, y, z), TileType::kWaterDeep);
+            break;
+          default:
+            break;
         }
       }
     }
@@ -289,28 +304,28 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   ID3D11Buffer* vbuffer;       
   {                            
     D3D11_BUFFER_DESC desc = {
-        .ByteWidth = sizeof(geometryBuilder.vertices[0]) *
-                     static_cast<UINT>(geometryBuilder.vertices.size()),
+        .ByteWidth = sizeof(geometry_builder.vertices[0]) *
+                     static_cast<UINT>(geometry_builder.vertices.size()),
         .Usage = D3D11_USAGE_IMMUTABLE,
         .BindFlags = D3D11_BIND_VERTEX_BUFFER,
     };
 
     D3D11_SUBRESOURCE_DATA initial = {.pSysMem =
-                                          geometryBuilder.vertices.data()};
+                                          geometry_builder.vertices.data()};
     device->CreateBuffer(&desc, &initial, &vbuffer);
   }
 
   ID3D11Buffer* ibuffer;
   {
     D3D11_BUFFER_DESC desc = {
-        .ByteWidth = sizeof(geometryBuilder.indices[0]) *
-                     static_cast<UINT>(geometryBuilder.indices.size()),
+        .ByteWidth = sizeof(geometry_builder.indices[0]) *
+                     static_cast<UINT>(geometry_builder.indices.size()),
         .Usage = D3D11_USAGE_IMMUTABLE,
         .BindFlags = D3D11_BIND_INDEX_BUFFER,
     };
 
     D3D11_SUBRESOURCE_DATA initial = {.pSysMem =
-                                          geometryBuilder.indices.data()};
+                                          geometry_builder.indices.data()};
     device->CreateBuffer(&desc, &initial, &ibuffer);
   }
 
@@ -390,8 +405,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 			"                                                           \n"
 			"float4 ps(PS_INPUT input) : SV_TARGET                      \n"
 			"{                                                          \n"
-			"    //float4 tex = texture0.Sample(sampler0, input.uv);      \n"
-			"    return input.color;    //* tex                          \n"
+			"    float4 tex = texture0.Sample(sampler0, input.uv);      \n"
+			"    return input.color * tex;    //* tex                          \n"
 			"}                                                          \n";
     ;
 
@@ -452,18 +467,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   ID3D11ShaderResourceView* textureView;
   {
     // checkerboard texture, with 50% transparency on black colors
-    unsigned int pixels[] = {
+    /*unsigned int pixels[] = {
         0x80000000,
         0xffffffff,
         0xffffffff,
         0x80000000,
-    };
-    UINT width = 2;
-    UINT height = 2;
+    };*/
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    stbi__vertically_flip_on_load = true;
+    auto grass_tex = stbi_load("data/blocks.png", &width, &height, &channels, 4);
 
     D3D11_TEXTURE2D_DESC desc = {
-        .Width = width,
-        .Height = height,
+        .Width = static_cast<UINT>(width),
+        .Height = static_cast<UINT>(height),
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -473,7 +493,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     };
 
     D3D11_SUBRESOURCE_DATA data = {
-        .pSysMem = pixels,
+        .pSysMem = grass_tex,
         .SysMemPitch = width * sizeof(unsigned int),
     };
 
@@ -693,7 +713,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
           const auto tile = map.GetTileAt(tile_pos.x, tile_pos.y, tile_pos.z);
 
-          if (tile != TileType::kAir && tile != TileType::kWater) {
+          if (tile != TileType::kAir && tile != TileType::kWaterSurface &&
+              tile != TileType::kWaterDeep) {
             const int x_direction =
                 (neighbour.x > 0) ? 1 : ((neighbour.x < 0) ? -1 : 0);
             const int y_direction =
@@ -716,16 +737,23 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
           }
 
          player.is_in_water = map.GetTileAt(normalized_pos.x, normalized_pos.y,
-                                            normalized_pos.z) == TileType::kWater;
+                              normalized_pos.z) == TileType::kWaterSurface || 
+                              map.GetTileAt(normalized_pos.x, normalized_pos.y,
+                              normalized_pos.z) == TileType::kWaterDeep;
         }
 
-        if (DirectX::XMVectorGetY(player.velocity) > -1.f) {
-          const DirectX::XMFLOAT3 gravity_acc(0.f, kGravity * dt_count, 0.f);
-          player.velocity = DirectX::XMVectorAdd(
-              player.velocity, DirectX::XMLoadFloat3(&gravity_acc));
+        if (DirectX::XMVectorGetY(player.velocity) > -1.f && !player.is_in_water) {
+          player.ApplyForce(DirectX::XMFLOAT3(0.f, kGravity, 0.f));
+        }
+
+        if (DirectX::XMVectorGetY(player.velocity) > -0.5f && player.is_in_water) {
+          player.ApplyForce(DirectX::XMFLOAT3(0.f, kWaterGravity, 0.f));
         }
 
         player.Update(dt_count);
+
+       // std::cout << DirectX::XMVectorGetY(player.velocity) << '\n';
+        std::cout << min_pos_y << '\n';
 
         const auto player_pos_x = DirectX::XMVectorGetX(player.position);
         const auto player_pos_y = DirectX::XMVectorGetY(player.position);
@@ -800,7 +828,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       context->OMSetDepthStencilState(depthState, 0);
       context->OMSetRenderTargets(1, &rtView, dsView);
 
-      context->DrawIndexed(geometryBuilder.indices.size(), 0, 0);
+      context->DrawIndexed(geometry_builder.indices.size(), 0, 0);
     }
 
     // change to FALSE to disable vsync

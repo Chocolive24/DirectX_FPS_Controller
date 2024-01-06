@@ -125,8 +125,101 @@ void GeometryBuilder::GenerateQuad(Vec3 right_up, Vec3 rigth_down,
 //  indices.insert(indices.begin(), cube_indices.begin(), cube_indices.end());
 //}
 
-void GeometryBuilder::GenerateCube(Vec3 pos, CubeColors cube_colors,
-                                   Vec3 scale) noexcept {
+void GeometryBuilder::GenerateBlock(Vec3 pos, TileType tile_type) noexcept {
+  Vec4 color(1, 1, 1, 1);
+  Vec3 scale_up(1, 1, 1);
+  Vec3 scale_down(1, 1, 1);
+  BlockFaceUV up_uv;
+  BlockFaceUV down_uv;
+  BlockFaceUV side_uv;
+
+  switch (tile_type) {
+    case TileType::kAir:
+      break;
+    case TileType::kGrass:
+      up_uv = {
+        .left_down = Vec2(kBlockPixelSize * kTopGrassTexPosX * kTexRatio, 
+                          kBlockPixelSize * kSolidBlockTexPosY * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kTopGrassTexPosX * kTexRatio, 1),
+        .right_up = Vec2(kBlockPixelSize * (kTopGrassTexPosX + 1) * kTexRatio, 1),
+        .right_down = Vec2(kBlockPixelSize * (kTopGrassTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kSolidBlockTexPosY * kTexRatio)
+      };
+      side_uv = {
+        .left_down = Vec2(kBlockPixelSize * kSideGrassTexPosX * kTexRatio, 
+                          kBlockPixelSize * kSolidBlockTexPosY * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kSideGrassTexPosX * kTexRatio, 1),
+        .right_up = Vec2(kBlockPixelSize * (kSideGrassTexPosX + 1) * kTexRatio, 1),
+        .right_down = Vec2(kBlockPixelSize * (kSideGrassTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio)
+      };
+      down_uv = {
+        .left_down = Vec2(kBlockPixelSize * kDirtTexPosX * kTexRatio, 
+                          kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kDirtTexPosX * kTexRatio, 1),
+        .right_up = Vec2(kBlockPixelSize * (kDirtTexPosX + 1) * kTexRatio, 1),
+        .right_down = Vec2(kBlockPixelSize * (kDirtTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio)
+      };
+      break;
+    case TileType::kDirt:
+      up_uv = {
+        .left_down = Vec2(kBlockPixelSize * kDirtTexPosX * kTexRatio, 
+                          kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kDirtTexPosX * kTexRatio, 1),
+        .right_up = Vec2(kBlockPixelSize * (kDirtTexPosX + 1) * kTexRatio, 1),
+        .right_down = Vec2(kBlockPixelSize * (kDirtTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio)};
+      down_uv = up_uv;
+      side_uv = up_uv;
+      break;
+    case TileType::kStone:
+      up_uv = {
+        .left_down = Vec2(kBlockPixelSize * kStoneTexPosX * kTexRatio, 
+                          kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kStoneTexPosX * kTexRatio, 1),
+        .right_up = Vec2(kBlockPixelSize * (kStoneTexPosX + 1) * kTexRatio, 1),
+        .right_down = Vec2(kBlockPixelSize * (kStoneTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kSolidBlockTexPosY  * kTexRatio)};
+      down_uv = up_uv;
+      side_uv = up_uv;
+      break;
+    case TileType::kWaterSurface:
+      color = Vec4(1, 1, 1, 0.8f);
+      scale_up = Vec3(1.f, 0.8f, 1.f);
+
+      up_uv = {
+        .left_down = Vec2(kBlockPixelSize * kWaterTexPosX * kTexRatio,
+                          kBlockPixelSize * kWaterTexPosY * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kWaterTexPosX * kTexRatio,
+                        kBlockPixelSize * (kWaterTexPosY + 1) * kTexRatio),
+        .right_up = Vec2(kBlockPixelSize * (kWaterTexPosX + 1) * kTexRatio,
+                         kBlockPixelSize * (kWaterTexPosY + 1) * kTexRatio),
+        .right_down = Vec2(kBlockPixelSize * (kWaterTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kWaterTexPosY * kTexRatio)
+      };
+      down_uv = up_uv;
+      side_uv = up_uv;
+      break;
+    case TileType::kWaterDeep:
+      color = Vec4(1, 1, 1, 0.1f);
+      up_uv = {
+        .left_down = Vec2(kBlockPixelSize * kWaterTexPosX * kTexRatio,
+                          kBlockPixelSize * kWaterTexPosY * kTexRatio),
+        .left_up = Vec2(kBlockPixelSize * kWaterTexPosX * kTexRatio,
+                        kBlockPixelSize * (kWaterTexPosY + 1) *kTexRatio),
+        .right_up = Vec2(kBlockPixelSize * (kWaterTexPosX + 1) * kTexRatio,
+                         kBlockPixelSize * (kWaterTexPosY + 1) * kTexRatio),
+        .right_down = Vec2(kBlockPixelSize * (kWaterTexPosX + 1) * kTexRatio,
+                           kBlockPixelSize * kWaterTexPosY * kTexRatio)
+      };
+      down_uv = up_uv;
+      side_uv = up_uv;
+      break;
+    default:
+      break;
+  }
+
   const uint32_t indice_offset = vertices.size();
 
   // Create vertices.
@@ -136,87 +229,87 @@ void GeometryBuilder::GenerateCube(Vec3 pos, CubeColors cube_colors,
   cube_vertices = {
     // Front face - counterclockwise.
     // right up
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.front_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+           side_uv.right_up, color},
     // left up
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.front_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+           side_uv.left_up, color},
     // left down
-    Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.front_color},
+    Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+           side_uv.left_down, color},
     // right down
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(1.0f, 0.0f), cube_colors.front_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+           side_uv.right_down, color},
 
     // Up face - counterclockwise.
     // right up
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.top_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          up_uv.right_up, color},
     // left up
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.top_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          up_uv.left_up, color},
     // left down
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.top_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+          up_uv.left_down, color},
     // right down
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(1.0f, 0.0f), cube_colors.top_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+          up_uv.right_down, color},
 
     // Back face - clockwise.
     // left up
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.back_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          side_uv.right_up, color},
     // left down
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 0.0f), cube_colors.back_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             side_uv.right_down, color},
     // right down
-    Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.back_color},
+    Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             side_uv.left_down, color},
     // right up
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.back_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          side_uv.left_up, color},
 
     // Down face clockwise.
     // left up
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.bottom_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             down_uv.right_up, color},
     // left down
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(1.0f, 0.0f), cube_colors.bottom_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+          down_uv.right_down, color},
     // right down
-    Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.bottom_color},
+    Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+             down_uv.left_down, color},
     // right up
-    Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.bottom_color},
+    Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             down_uv.left_up, color},
 
     // Right face - counterclockwise.
     // right up
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.right_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          side_uv.right_up, color},
     // left up
-    Vertex{Vec3{0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.right_color},
+    Vertex{Vec3{0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+          side_uv.left_up, color},
     // left down
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.right_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+          side_uv.left_down, color},
     // right down
-    Vertex{Vec3{0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(1.0f, 0.0f), cube_colors.right_color},
+    Vertex{Vec3{0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             side_uv.right_down, color},
 
     // Left face - clockwise.
     // left up
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 1.0f), cube_colors.left_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, -0.5f * scale_up.z} + pos,
+          side_uv.left_up, color},
     // left down
-    Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, -0.5f * scale.z} + pos,
-           Vec2(0.0f, 0.0f), cube_colors.left_color},
+    Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, -0.5f * scale_down.z} + pos,
+             side_uv.left_down, color},
     // right up
-    Vertex{Vec3{-0.5f * scale.x, 0.5f * scale.y, 0.5f * scale.z} + pos,
-           Vec2(1.0f, 1.0f), cube_colors.left_color},
+    Vertex{Vec3{-0.5f * scale_up.x, 0.5f * scale_up.y, 0.5f * scale_up.z} + pos,
+          side_uv.right_up, color},
     // right down
-      Vertex{Vec3{-0.5f * scale.x, -0.5f * scale.y, 0.5f * scale.z} + pos,
-             Vec2(1.0f, 0.0f), cube_colors.left_color}
+      Vertex{Vec3{-0.5f * scale_down.x, -0.5f * scale_down.y, 0.5f * scale_down.z} + pos,
+             side_uv.right_down, color}
   };
 
   for (const auto& vertex : cube_vertices) {
