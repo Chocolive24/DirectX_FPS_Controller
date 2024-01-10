@@ -99,10 +99,8 @@ void Player::HandleMovements() noexcept {
 void Player::RotateView(const float dt) noexcept {
   static constexpr float pitch_limit = 89.f;
 
-  float deltaMultiplier = view_sensitivity_ * dt;
-
-  yaw_ += Input::state.mouse_delta_x * deltaMultiplier;
-  pitch_ -= Input::state.mouse_delta_y * deltaMultiplier;
+  yaw_ += Input::state.mouse_delta_x * view_sensitivity_ * dt;
+  pitch_ -= Input::state.mouse_delta_y * view_sensitivity_ * dt;
 
   if (pitch_ > pitch_limit) pitch_ = pitch_limit;
   if (pitch_ < -pitch_limit) pitch_ = -pitch_limit;

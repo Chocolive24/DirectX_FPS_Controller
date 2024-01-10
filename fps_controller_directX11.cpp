@@ -799,6 +799,12 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
       context->OMSetDepthStencilState(depthState, 0);
       context->OMSetRenderTargets(1, &rtView, dsView);
 
+
+      // LE BLOC AU NBR BLOCK_NBR A POUR INDICES LES INDICES ALLANNT DE 
+      // 36 * BLOCK_NBR à 36 * BLOCK_NBR + 36
+      // PEUT ETRE STOCKER LES 36 INDICES DANS UN TABLEAU POUR EVITER LE DESORDRE QUAND
+      // ON SORT AVEC LES DISTANCES.
+
       //int block_nbr = 0;
 
       //for (int z = 0; z < Map::kMapDepth; z++) {
