@@ -133,12 +133,14 @@
     <ClCompile Include="geometry_builder.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="map.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="geometry_builder.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="map.h" />
+    <ClInclude Include="ParticleSystem.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

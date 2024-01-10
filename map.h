@@ -5,7 +5,7 @@
 #include <array>
 #include <vector>
 
-enum class BlockType {
+enum class BlockType : std::uint8_t {
   kAir,
   kGrass,
   kDirt,
@@ -16,9 +16,9 @@ enum class BlockType {
 
 class Map {
  public:
-  static constexpr uint32_t kMapWidth = 128;
-  static constexpr uint32_t kMapHeight = 128;
-  static constexpr uint32_t kMapDepth = 128;
+  static constexpr uint16_t kMapWidth = 128;
+  static constexpr uint16_t kMapHeight = 128;
+  static constexpr uint16_t kMapDepth = 128;
   static constexpr uint64_t kMapSize = kMapWidth * kMapHeight * kMapDepth;
 
   static constexpr std::array<DirectX::XMINT3, 10> kNeighbourTiles = {

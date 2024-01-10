@@ -1,6 +1,7 @@
 #pragma once
 
 #include "map.h"
+#include "ParticleSystem.h"
 
 #include <vector>
 
@@ -66,5 +67,7 @@ public:
                     Vec3 left_up);
   //void GenerateCube(Vec3 color) noexcept;
   void GenerateBlock(Vec3 pos, BlockType tile_type) noexcept;
+
+  void GenerateParticles(const ParticleSystem& particle_system);
 };
 

@@ -16,6 +16,13 @@ void GeometryBuilder::GenerateQuad(Vec3 right_up, Vec3 rigth_down,
   indices = {0, 1, 2, 0, 3, 2};
 }
 
+void GeometryBuilder::GenerateParticles(const ParticleSystem& particle_system) {
+  for (const auto& pos : particle_system.positions()) {
+    const auto to_vec3 = Vec3(pos.x, pos.y, pos.z);
+    GenerateBlock(to_vec3, BlockType::kGrass);
+  }
+}
+
 //void GeometryBuilder::GenerateCube(Vec3 color) noexcept {
 //    // Create vertices.
 //  constexpr int kVertexCount = 24;

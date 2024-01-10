@@ -139,13 +139,6 @@ void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves
           frequency *= 2.0f;
         }
 
-        // Transform the range to [0.0, 1.0], supposing that the range of
-        // Noise2D is
-        // [-1.0, 1.0]
-        //result += 1.0;
-        //result *= 0.5;
-        //result *= kMapHeight;
-
         static constexpr float base_surface = kMapHeight * 0.5f - 4;
 
         float surface = base_surface + result * 50; // 50
