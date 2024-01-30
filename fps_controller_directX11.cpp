@@ -51,7 +51,7 @@
 static constexpr float kGravity = -43.2;
 static constexpr float kWaterGravity = -1;
 
-static DirectX::XMFLOAT3 player_start_pos(0.f, 0.f, 0.f);
+static DirectX::XMFLOAT3 player_start_pos(0.f, Map::kMapHeight, 0.f);
 static Player player;
 
 HWND window;
@@ -233,19 +233,19 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
     dxgiDevice->Release();
   }
                       
-  ParticleSystem particle_system;
-  static constexpr int max_particle = 30;
-  particle_system.Begin(max_particle, 0.2f);
-  particle_system.SpawnParticle(DirectX::XMFLOAT3(0.f, 0.f, 0.f),
-                                DirectX::XMFLOAT3(0.f, 1.f, 0.f), 10.f);
+  //ParticleSystem particle_system;
+  //static constexpr int max_particle = 30;
+  //particle_system.Begin(max_particle, 0.2f);
+  //particle_system.SpawnParticle(DirectX::XMFLOAT3(0.f, 0.f, 0.f),
+  //                              DirectX::XMFLOAT3(0.f, 1.f, 0.f), 10.f);
   GeometryBuilder geometry_builder;
   geometry_builder.Begin(Map::kMapSize * 24, Map::kMapSize * 36);
-  geometry_builder.GenerateParticles(particle_system);
+  //geometry_builder.GenerateParticles(particle_system);
   Map map;
   map.Begin();
   map.GenerateTerrain(1.f, 0.005f, 8);
 
-  /*for (int z = 0; z < Map::kMapDepth; z++) {
+  for (int z = 0; z < Map::kMapDepth; z++) {
     for (int y = 0; y < Map::kMapHeight; y++) {
       for (int x = 0; x < Map::kMapWidth; x++) {
         switch (map.GetBlockAt(x, y, z)) { 
@@ -269,7 +269,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
         }
       }
     }
-  }*/
+  }
 
   std::vector<std::pair<std::uint32_t, float>> block_distances;
   block_distances.resize(geometry_builder.indices.size());
@@ -277,10 +277,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   ID3D11Buffer* vbuffer;       
   {                            
     D3D11_BUFFER_DESC desc = {
-        .ByteWidth = max_particle * 24 * sizeof(geometry_builder.vertices[0]),
-        .Usage = D3D11_USAGE_DYNAMIC,
+        .ByteWidth = sizeof(geometry_builder.vertices[0]) *
+                     static_cast<UINT>(geometry_builder.vertices.size()),
+        .Usage = D3D11_USAGE_IMMUTABLE,
         .BindFlags = D3D11_BIND_VERTEX_BUFFER,
-        .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+        //.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
     };
 
     D3D11_SUBRESOURCE_DATA initial = {.pSysMem =
@@ -291,10 +292,11 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
   ID3D11Buffer* ibuffer;
   {
     D3D11_BUFFER_DESC desc = {
-        .ByteWidth = max_particle * 36 * sizeof(geometry_builder.indices[0]),
-        .Usage = D3D11_USAGE_DYNAMIC,
+        .ByteWidth = sizeof(geometry_builder.indices[0]) * 
+                     static_cast<UINT>(geometry_builder.vertices.size()),
+        .Usage = D3D11_USAGE_IMMUTABLE,
         .BindFlags = D3D11_BIND_INDEX_BUFFER,
-        .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+        //.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
     };
 
     D3D11_SUBRESOURCE_DATA initial = {.pSysMem =
@@ -642,33 +644,33 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
           (float)((double)(c2.QuadPart - c1.QuadPart) / freq.QuadPart);
       c1 = c2;
 
-      geometry_builder.vertices.clear();
-      geometry_builder.indices.clear();
+      //geometry_builder.vertices.clear();
+      //geometry_builder.indices.clear();
 
-      if (time > 1.f) {
-        particle_system.SpawnParticle(DirectX::XMFLOAT3(0.f, 0.f, 0.f),
-                                      DirectX::XMFLOAT3(1.f, 0.3f, 0.f), 10.f);
-        time = 0.f;
-      }
+      //if (time > 1.f) {
+      //  particle_system.SpawnParticle(DirectX::XMFLOAT3(0.f, 0.f, 0.f),
+      //                                DirectX::XMFLOAT3(1.f, 0.3f, 0.f), 10.f);
+      //  time = 0.f;
+      //}
 
-      particle_system.Update(dt.count());
-      geometry_builder.GenerateParticles(particle_system);
+      //particle_system.Update(dt_count);
+      //geometry_builder.GenerateParticles(particle_system);
 
-      // Update vertex buffer.
-      D3D11_MAPPED_SUBRESOURCE mapped_resource;
-      context->Map((ID3D11Resource*)vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
-                   &mapped_resource);
-      memcpy(mapped_resource.pData, geometry_builder.vertices.data(),
-             max_particle * 24 * sizeof(geometry_builder.vertices[0]));
-      context->Unmap((ID3D11Resource*)vbuffer, 0);
+      //// Update vertex buffer.
+      //D3D11_MAPPED_SUBRESOURCE mapped_resource;
+      //context->Map((ID3D11Resource*)vbuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
+      //             &mapped_resource);
+      //memcpy(mapped_resource.pData, geometry_builder.vertices.data(),
+      //       max_particle * 24 * sizeof(geometry_builder.vertices[0]));
+      //context->Unmap((ID3D11Resource*)vbuffer, 0);
 
-      // Update index buffer.
-      D3D11_MAPPED_SUBRESOURCE mapped_resource_i;
-      context->Map((ID3D11Resource*)ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
-                   &mapped_resource_i);
-      memcpy(mapped_resource_i.pData, geometry_builder.indices.data(),
-             max_particle * 36 * sizeof(geometry_builder.indices[0]));
-      context->Unmap((ID3D11Resource*)ibuffer, 0);
+      //// Update index buffer.
+      //D3D11_MAPPED_SUBRESOURCE mapped_resource_i;
+      //context->Map((ID3D11Resource*)ibuffer, 0, D3D11_MAP_WRITE_DISCARD, 0,
+      //             &mapped_resource_i);
+      //memcpy(mapped_resource_i.pData, geometry_builder.indices.data(),
+      //       max_particle * 36 * sizeof(geometry_builder.indices[0]));
+      //context->Unmap((ID3D11Resource*)ibuffer, 0);
 
       // output viewport covering all client area of window
       D3D11_VIEWPORT viewport = {
@@ -758,9 +760,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
 
         player.Update(dt_count);
 
-        //std::cout << DirectX::XMVectorGetY(player.velocity) << '\n';
-        //std::cout << min_pos_y << '\n';
-
         const auto player_pos_x = DirectX::XMVectorGetX(player.position());
         const auto player_pos_y = DirectX::XMVectorGetY(player.position());
         const auto player_pos_z = DirectX::XMVectorGetZ(player.position());
@@ -769,9 +768,6 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previnstance, LPSTR cmdline,
           player.set_velocity(DirectX::XMVectorSetY(player.velocity(), 0.f));
           player.is_grounded = true;
         } 
-        else {
-          //player.is_grounded = false;
-        }
 
         player.set_position(DirectX::XMVectorSetX(
             player.position(), std::clamp(player_pos_x, min_pos_x, max_pos_x)));

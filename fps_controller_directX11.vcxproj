@@ -129,6 +129,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="chunk.cpp" />
     <ClCompile Include="fps_controller_directX11.cpp" />
     <ClCompile Include="geometry_builder.cpp" />
     <ClCompile Include="input.cpp" />
@@ -137,6 +138,7 @@
     <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="chunk.h" />
     <ClInclude Include="geometry_builder.h" />
     <ClInclude Include="input.h" />
     <ClInclude Include="map.h" />

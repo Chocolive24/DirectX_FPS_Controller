@@ -6,6 +6,7 @@
 
 void Map::Begin() { 
     map_.resize(kMapSize, BlockType::kAir);
+    std::fill(chunks_.begin(), chunks_.end(), new Chunk());
     //CreatePermutationArray(); 
 }
 
@@ -123,6 +124,7 @@ double Map::Grad(int hash, double x, double y) {
 
 void Map::GenerateTerrain(float amplitude, float frequency, std::uint8_t octaves) {
   const auto base_ampl = amplitude, base_freq = frequency;
+
   for (int z = 0; z < kMapDepth; z++) {
     for (int y = 0; y < kMapHeight; y++) {
       for (int x = 0; x < kMapWidth; x++) {

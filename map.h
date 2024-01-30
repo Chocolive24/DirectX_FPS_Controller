@@ -1,18 +1,13 @@
 #pragma once
 
+#include "chunk.h"
+
 #include <DirectXMath.h>
 
 #include <array>
 #include <vector>
 
-enum class BlockType : std::uint8_t {
-  kAir,
-  kGrass,
-  kDirt,
-  kStone,
-  kWaterSurface,
-  kWaterDeep,
-};
+
 
 class Map {
  public:
@@ -49,6 +44,7 @@ class Map {
   void SetBlockAt(int x, int y, int z, BlockType type);
 
  private:
+  std::array<Chunk*, kMapSize> chunks_;
   std::vector<BlockType> map_;
 
   static constexpr std::uint16_t kPermutationCount = 256;
